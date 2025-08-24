@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: store
+  datasource:
+    url: jdbc:mysql://localhost:3306/store_temp?createDatabaseIfNotExist=true
+    username: root
+    password: Bunny@15052005
+  jpa:
+    hibernate:
+      ddl-auto: create
