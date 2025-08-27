@@ -1,5 +1,6 @@
 package com.hemanthjangam.store;
 
+import com.hemanthjangam.store.services.AddressService;
 import com.hemanthjangam.store.services.UserService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,7 +13,7 @@ public class StoreApplication {
 		ApplicationContext context =  SpringApplication.run(StoreApplication.class, args);
         var service =  context.getBean(UserService.class);
 
-        service.showRelatedEntities();
+        service.manageProducts();
 	}
 
 }
