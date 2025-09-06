@@ -25,7 +25,7 @@ public class User {
     @Column(nullable = false, name = "name")
     private String name;
 
-    @Column(nullable = false, name = "email")
+    @Column(unique = true, nullable = false, name = "email")
     private String email;
 
     @Column(nullable = false, name = "password")
@@ -33,6 +33,7 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @Builder.Default
+    @ToString.Exclude
     private List<Address> addresses = new ArrayList<>();
 
     public void addAddress(Address address) {
@@ -59,6 +60,7 @@ public class User {
     )
 
     @Builder.Default
+    @ToString.Exclude
     private Set<Tag> tags = new HashSet<>();
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE)
@@ -70,6 +72,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
+    @ToString.Exclude
 
     private Set<Product> favoriteProducts = new HashSet<>();
 
