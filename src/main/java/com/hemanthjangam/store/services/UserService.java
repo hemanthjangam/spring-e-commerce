@@ -1,8 +1,6 @@
 package com.hemanthjangam.store.services;
 
 import com.hemanthjangam.store.entities.Address;
-import com.hemanthjangam.store.entities.Category;
-import com.hemanthjangam.store.entities.Product;
 import com.hemanthjangam.store.entities.User;
 import com.hemanthjangam.store.repositories.*;
 import jakarta.persistence.EntityManager;
@@ -90,14 +88,24 @@ public class UserService {
         productRepository.updatePriceByCategory(BigDecimal.valueOf(10), (byte)1);
     }
 
+    @Transactional 
     public void fetchProducts() {
-        var products = productRepository.findByCategory(new Category((byte)1));
+        var products = productRepository.findProductsByPrice(BigDecimal.valueOf(1), BigDecimal.valueOf(15));
         products.forEach(System.out::println);
     }
 
     @Transactional
-    public void fetchUser() {
-        var user = userRepository.findByEmail("name@example1.com").orElseThrow();
-        System.out.println(user);
+    public void fetchUsers() {
+        var users = userRepository.findAllWithAddresses();
+        users.forEach(u -> {
+            System.out.println(u);
+            u.getAddresses().forEach(System.out::println);
+        });
+    }
+
+    @Transactional
+    public  void printLoyalProfiles() {
+        var users = userRepository.findLoyalUsers(2);
+        users.forEach(p -> System.out.println(p.getId() + " : " + p.getEmail()));
     }
 }
