@@ -1,5 +1,6 @@
 package com.hemanthjangam.store.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,20 +33,18 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @Builder.Default
+    @JsonManagedReference
     private List<Address> addresses = new ArrayList<>();
 
     public void addAddress(Address address) {
         addresses.add(address);
-        address.setUser((this));
+        address.setUser(this);
     }
 
     public void removeAddress(Address address) {
         addresses.remove(address);
         address.setUser(null);
     }
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE)
-    private Profile profile;
 
     @ManyToMany
     @JoinTable(
@@ -64,6 +63,8 @@ public class User {
         return getClass().getSimpleName() + "(" +
                 "id = " + id + ", " +
                 "name = " + name + ", " +
+                "password = " + password + ", " +
                 "email = " + email + ")";
     }
+
 }
