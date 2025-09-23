@@ -4,7 +4,6 @@ import com.hemanthjangam.store.dtos.ChangePasswordRequest;
 import com.hemanthjangam.store.dtos.RegisterUserRequest;
 import com.hemanthjangam.store.dtos.UpdateUserRequest;
 import com.hemanthjangam.store.dtos.UserDto;
-import com.hemanthjangam.store.entities.User;
 import com.hemanthjangam.store.exceptions.EmailAlreadyRegisteredException;
 import com.hemanthjangam.store.exceptions.UserNotFoundException;
 import com.hemanthjangam.store.exceptions.UnauthorizedUserException;
@@ -52,33 +51,21 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
-    public User updateUser(Long id, UpdateUserRequest request) {
-        var user = userRepository.findById(id).orElse(null);
-        if(user == null) {
-            throw new  UserNotFoundException();
-        }
-
+    public UserDto updateUser(Long id, UpdateUserRequest request) {
+        var user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
         userMapper.update(request, user);
         userRepository.save(user);
 
-        return user;
+        return userMapper.toDto(user);
     }
 
     public void deleteUser(Long id) {
-        var user = userRepository.findById(id).orElse(null);
-        if(user == null) {
-            throw new UserNotFoundException();
-        }
-
+        var user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
         userRepository.delete(user);
     }
 
     public void changePassword(Long id, ChangePasswordRequest request) {
-        var user = userRepository.findById(id).orElse(null);
-        if(user == null) {
-            throw new UserNotFoundException();
-        }
-
+        var user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
         if(!user.getPassword().equals(request.getOldPassword())) {
             throw new UnauthorizedUserException();
         }

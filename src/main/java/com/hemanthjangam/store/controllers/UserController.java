@@ -56,9 +56,9 @@ public class UserController {
     public ResponseEntity<UserDto> updateUser(
             @PathVariable(name = "id") Long id,
             @RequestBody UpdateUserRequest request) {
-        var user = userService.updateUser(id, request);
+        var userDto = userService.updateUser(id, request);
 
-        return ResponseEntity.ok(userMapper.toDto(user));
+        return ResponseEntity.ok(userDto);
     }
 
     @DeleteMapping("{id}")
