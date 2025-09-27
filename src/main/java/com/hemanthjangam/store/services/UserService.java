@@ -4,6 +4,7 @@ import com.hemanthjangam.store.dtos.ChangePasswordRequest;
 import com.hemanthjangam.store.dtos.RegisterUserRequest;
 import com.hemanthjangam.store.dtos.UpdateUserRequest;
 import com.hemanthjangam.store.dtos.UserDto;
+import com.hemanthjangam.store.entities.Role;
 import com.hemanthjangam.store.exceptions.EmailAlreadyRegisteredException;
 import com.hemanthjangam.store.exceptions.UserNotFoundException;
 import com.hemanthjangam.store.exceptions.UnauthorizedUserException;
@@ -11,6 +12,7 @@ import com.hemanthjangam.store.mappers.UserMapper;
 import com.hemanthjangam.store.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -20,6 +22,7 @@ import java.util.Set;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public Iterable<UserDto> getAllUsers(String sort) {
         if (!Set.of("name", "email").contains(sort))
@@ -46,6 +49,8 @@ public class UserService {
         }
 
         var user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole(Role.USER);
         userRepository.save(user);
 
         return userMapper.toDto(user);
