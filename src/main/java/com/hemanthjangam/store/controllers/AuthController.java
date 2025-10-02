@@ -58,7 +58,7 @@ public class AuthController {
     public ResponseEntity<JwtResponse> refresh(
             @CookieValue(value = "refreshToken") String refreshToken) {
         var jwt = jwtService.parseToken(refreshToken);
-        if (jwt == null || !jwt.isExpired()) {
+        if (jwt == null || jwt.isExpired()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
