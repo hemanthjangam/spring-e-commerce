@@ -1,9 +1,8 @@
-package com.hemanthjangam.store.services;
+package com.hemanthjangam.store.payments;
 
 import com.hemanthjangam.store.entities.Order;
 import com.hemanthjangam.store.entities.OrderItem;
 import com.hemanthjangam.store.entities.PaymentStatus;
-import com.hemanthjangam.store.exceptions.PaymentException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;

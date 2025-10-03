@@ -37,8 +37,7 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword()
-                )
-        );
+                ));
 
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
         var accessToken = jwtService.generateAccessToken(user);

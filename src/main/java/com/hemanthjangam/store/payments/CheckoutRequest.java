@@ -1,4 +1,4 @@
-package com.hemanthjangam.store.dtos;
+package com.hemanthjangam.store.payments;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

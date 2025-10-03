@@ -1,4 +1,4 @@
-package com.hemanthjangam.store.exceptions;
+package com.hemanthjangam.store.payments;
 
 import lombok.NoArgsConstructor;
 

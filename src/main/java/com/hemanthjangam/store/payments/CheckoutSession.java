@@ -1,4 +1,4 @@
-package com.hemanthjangam.store.services;
+package com.hemanthjangam.store.payments;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

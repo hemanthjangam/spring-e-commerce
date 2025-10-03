@@ -1,4 +1,4 @@
-package com.hemanthjangam.store.dtos;
+package com.hemanthjangam.store.payments;
 
 import lombok.Data;
 
