@@ -1,12 +1,12 @@
 package com.hemanthjangam.store.payments;
 
-import com.hemanthjangam.store.entities.Order;
-import com.hemanthjangam.store.exceptions.CartEmptyException;
-import com.hemanthjangam.store.exceptions.CartNotFoundException;
-import com.hemanthjangam.store.repositories.CartRepository;
-import com.hemanthjangam.store.repositories.OrderRepository;
-import com.hemanthjangam.store.services.AuthService;
-import com.hemanthjangam.store.services.CartService;
+import com.hemanthjangam.store.orders.Order;
+import com.hemanthjangam.store.carts.CartEmptyException;
+import com.hemanthjangam.store.carts.CartNotFoundException;
+import com.hemanthjangam.store.carts.CartRepository;
+import com.hemanthjangam.store.orders.OrderRepository;
+import com.hemanthjangam.store.auth.AuthService;
+import com.hemanthjangam.store.carts.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

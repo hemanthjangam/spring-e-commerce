@@ -1,6 +1,6 @@
 package com.hemanthjangam.store.payments;
 
-import com.hemanthjangam.store.entities.PaymentStatus;
+import com.hemanthjangam.store.orders.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

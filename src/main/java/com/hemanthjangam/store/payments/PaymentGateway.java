@@ -1,6 +1,6 @@
 package com.hemanthjangam.store.payments;
 
-import com.hemanthjangam.store.entities.Order;
+import com.hemanthjangam.store.orders.Order;
 
 import java.util.Optional;
 

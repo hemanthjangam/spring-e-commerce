@@ -1,9 +1,9 @@
 package com.hemanthjangam.store.payments;
 
-import com.hemanthjangam.store.dtos.ErrorDto;
-import com.hemanthjangam.store.exceptions.CartEmptyException;
-import com.hemanthjangam.store.exceptions.CartNotFoundException;
-import com.hemanthjangam.store.repositories.OrderRepository;
+import com.hemanthjangam.store.common.ErrorDto;
+import com.hemanthjangam.store.carts.CartEmptyException;
+import com.hemanthjangam.store.carts.CartNotFoundException;
+import com.hemanthjangam.store.orders.OrderRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
