@@ -1,0 +1,161 @@
+/* ========================= src/App.css (Myntra Layout and Nav) ========================= */
+
+/* --- 1. Navigation Bar (Myntra Header Style) --- */
+.nav-bar {
+  background-color: var(--color-background-white);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  height: 80px; /* Taller for prominence */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+}
+
+.nav-brand {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+.nav-links-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-link {
+  color: var(--color-text-dark);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0 15px;
+  height: 80px; /* Matches nav height for full-height border on hover */
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  transition: color 0.2s, border-bottom 0.2s;
+}
+
+.nav-link:hover {
+    color: var(--color-primary);
+    border-bottom: 3px solid var(--color-primary);
+}
+
+/* Action Icons (Cart, Wishlist, User) container */
+.nav-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    margin-left: 20px;
+}
+.nav-action-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: var(--color-text-dark);
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1;
+    position: relative;
+    transition: color 0.2s;
+    min-width: 40px; /* Ensures consistent sizing */
+    text-align: center;
+}
+.nav-action-link:hover { color: var(--color-primary); }
+.nav-action-icon { font-size: 1.4rem; margin-bottom: 4px; }
+.cart-count {
+    background-color: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    padding: 2px 5px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    line-height: 1;
+}
+
+/* Logout Button in Nav (styled as a small link/text) */
+.nav-logout-button {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    color: var(--color-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-transform: capitalize;
+    transition: color 0.2s;
+}
+.nav-logout-button:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+/* --- 2. Profile/Account Menu Layout (for ProfilePage.jsx) --- */
+.account-menu {
+    /* desktop */
+    border-right: 1px solid var(--color-border);
+    padding-right: 2rem;
+}
+.account-menu ul {
+    list-style: none;
+    padding: 0;
+}
+.account-menu li a {
+    display: block;
+    padding: 10px 0;
+    font-size: 1rem;
+    color: var(--color-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.account-menu li a:hover {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* --- 3. Responsive Adjustments (Mobile First) --- */
+@media (max-width: 768px) {
+    .nav-bar {
+        height: 50px;
+        padding: 0 10px;
+    }
+    .nav-brand {
+        font-size: 1.5rem;
+    }
+    .nav-links-container .nav-link:not(.admin-link) {
+        display: none; /* Hide main links on small screens */
+    }
+    .nav-actions-group {
+        gap: 10px;
+    }
+    .nav-action-link span { display: none; } /* Hide text labels below icons */
+
+    .account-menu {
+        border-right: none;
+        padding-right: 0;
+        margin-bottom: 20px;
+    }
+    .account-menu ul {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--color-border);
+    }
+    .account-menu li {
+        flex-basis: auto;
+    }
+    .account-menu li a {
+        padding: 8px 0;
+    }
+}

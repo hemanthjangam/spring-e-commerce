@@ -5,4 +5,16 @@ spring:
     password: Bunny@15052005
   jpa:
     show-sql: true
+  # CONFIGURATION FOR FILE SIZE LIMITS
+  server:
+    tomcat:
+      # Allows large file streams without intermediate storage limitation
+      max-swallow-size: -1
+  servlet:
+    multipart:
+      max-file-size: 5MB # Max size per individual file upload
+      max-request-size: 10MB # Max size for the entire multipart request
 websiteUrl: http://localhost:4242
+file:
+  # Directory for local file storage (must be accessible by the running application)
+  upload-dir: /tmp/store-uploads/

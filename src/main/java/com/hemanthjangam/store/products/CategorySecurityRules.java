@@ -1,4 +1,4 @@
-package com.hemanthjangam.store.users;
+package com.hemanthjangam.store.products;
 
 import com.hemanthjangam.store.common.SecurityRules;
 import org.springframework.http.HttpMethod;
@@ -7,10 +7,10 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserSecurityRules implements SecurityRules {
+public class CategorySecurityRules implements SecurityRules {
     @Override
     public void configure(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
-        registry.requestMatchers(HttpMethod.POST, "/checkout/webhook").permitAll();
-        registry.requestMatchers(HttpMethod.POST, "/users").permitAll();
+        // Allow all GET requests to fetch categories without requiring authentication.
+        registry.requestMatchers(HttpMethod.GET, "/categories/**").permitAll();
     }
 }

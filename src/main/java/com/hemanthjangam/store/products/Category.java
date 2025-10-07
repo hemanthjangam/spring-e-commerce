@@ -1,5 +1,6 @@
 package com.hemanthjangam.store.products;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +23,12 @@ public class Category {
     @Column(name = "name")
     private String name;
 
+    // NEW FIELD for category image/icon
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @OneToMany(mappedBy = "category")
+    @JsonIgnore
     private Set<Product> products = new HashSet<>();
 
     public Category(String name) {
