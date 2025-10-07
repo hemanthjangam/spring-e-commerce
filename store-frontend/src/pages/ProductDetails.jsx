@@ -1,4 +1,3 @@
-/* ========================= src/pages/ProductDetails.jsx (FINAL FIX) ========================= */
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
@@ -12,218 +11,223 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import useWebSocket from '../utils/useWebSocket';
+import { HiOutlineShoppingBag, HiOutlineHeart, HiHeart } from 'react-icons/hi';
 
 export default function ProductDetails() {
   const { id } = useParams();
   const { token, role } = useAuth();
   const { cartId, setCartId, refreshCount } = useCart();
 
+  // State Management
   const [product, setProduct] = useState(null);
+  const [isInWishlist, setIsInWishlist] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
-  const [isInWishlist, setIsInWishlist] = useState(false);
 
-  // Check if the current product is in the user's wishlist
-  const checkWishlistStatus = useCallback(async () => {
-    if (!token || !product) return;
-    try {
-      const data = await getWishlist(token);
-      const isPresent = data.some(item => item?.product?.id === product.id);
-      setIsInWishlist(isPresent);
-    } catch (e) {
-      // If fetching the wishlist fails (e.g., 401), treat as not in wishlist
-      setIsInWishlist(false);
-    }
-  }, [token, product]);
+  // --- Data Fetching ---
 
+  // Fetch main product details on component load
   useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    setError(null);
-
-    (async () => {
+    let isMounted = true;
+    const fetchProduct = async () => {
       try {
-        // FIX: Use native fetch for public GET /products/{id}
-        const res = await fetch(`${API_BASE_URL}/products/${id}`);
-
-        if (!res.ok) {
-            // Check for 404/500 etc. errors
-            throw new Error(`Failed to fetch product details. Status: ${res.status}`);
+        const response = await fetch(`${API_BASE_URL}/products/${id}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch product. Status: ${response.status}`);
         }
-
-        const data = await res.json();
-        if (mounted) setProduct(data);
-
+        const data = await response.json();
+        if (isMounted) {
+          setProduct(data);
+        }
       } catch (err) {
-        console.error('Product fetch error', err);
-        if (mounted) setError(err.message || 'Failed to load product');
+        if (isMounted) {
+          setError(err.message || 'Failed to load product details.');
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    })();
+    };
 
-    return () => { mounted = false; };
+    fetchProduct();
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
-  // Re-check wishlist status whenever the product or token changes
+  // Check wishlist status when product or token changes
   useEffect(() => {
-    if (product && token) {
-      checkWishlistStatus();
+    if (!token || !product) {
+      setIsInWishlist(false);
+      return;
     }
-  }, [product, token, checkWishlistStatus]);
-
-  // WebSocket for inventory updates (uses useWebSocket from /utils)
-  const topic = product ? `inventory/${product.id}` : null;
-  const realTime = useWebSocket(topic);
-
-  useEffect(() => {
-    if (!realTime || !product) return;
-    if (realTime.productId === product.id) {
-      setProduct(prev => ({ ...prev, stock: realTime.newStock }));
-      setMessage(`Live Inventory Updated: ${realTime.newStock} units remaining.`);
-    }
-  }, [realTime, product]);
-
-  // Timeout for transient messages (success/stock updates)
-  useEffect(() => {
-    if (!message && !error) return;
-    const t = setTimeout(() => { setMessage(null); setError(null); }, 4000);
-    return () => clearTimeout(t);
-  }, [message, error]);
-
-  const ensureCart = useCallback(async () => {
-    let currentCartId = cartId;
-    const localKey = token ? `savedCartId_${localStorage.getItem('userId')}` : 'cartId';
-
-    if (!currentCartId) {
-      const created = await apiCreateCart(token || null);
-      currentCartId = created?.id;
-      if (currentCartId) {
-        setCartId(currentCartId);
-        localStorage.setItem(localKey, currentCartId);
+    const checkWishlist = async () => {
+      try {
+        const currentWishlist = await getWishlist(token);
+        const isProductInWishlist = currentWishlist.some(item => item?.product?.id === product.id);
+        setIsInWishlist(isProductInWishlist);
+      } catch {
+        setIsInWishlist(false); // Assume not in wishlist if fetch fails
       }
+    };
+    checkWishlist();
+  }, [product, token]);
+
+
+  // --- WebSocket for Live Inventory ---
+
+  const topic = product ? `inventory/${product.id}` : null;
+  const realTimeUpdate = useWebSocket(topic);
+
+  useEffect(() => {
+    // This is the robust check to prevent crashes from null or malformed messages
+    if (
+      realTimeUpdate &&
+      product &&
+      realTimeUpdate.productId === product.id &&
+      realTimeUpdate.newStock !== null &&
+      realTimeUpdate.newStock !== undefined
+    ) {
+      setProduct(prevProduct => ({ ...prevProduct, stock: realTimeUpdate.newStock }));
+      setMessage(`Live inventory updated: ${realTimeUpdate.newStock} units left.`);
     }
-    return currentCartId;
-  }, [cartId, token, setCartId]);
+  }, [realTimeUpdate, product]);
+
+
+  // --- User Actions ---
 
   const handleAddToCart = useCallback(async () => {
-    if (product?.stock !== undefined && product.stock <= 0) {
-      setMessage('Item is out of stock.');
+    if (product.stock <= 0) {
+      setError('This item is out of stock.');
       return;
     }
     try {
-      const currentCartId = await ensureCart();
-      await apiAddToCart(currentCartId, product.id, 1, token || null);
-      setMessage('Added to cart successfully.');
-      refreshCount(token || null);
+      let currentCartId = cartId;
+      if (!currentCartId) {
+        const newCart = await apiCreateCart(token);
+        currentCartId = newCart.id;
+        setCartId(currentCartId);
+      }
+      await apiAddToCart(currentCartId, product.id, 1, token);
+      setMessage('Added to bag successfully!');
+      refreshCount();
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'Failed to add to cart');
+      setError(err.message || 'Failed to add item to bag.');
     }
-  }, [product, ensureCart, token, refreshCount]);
+  }, [product, cartId, token, setCartId, refreshCount]);
 
-  // Toggles item in the wishlist
   const handleWishlistToggle = useCallback(async () => {
-    if (!token) { setError('Sign in to manage your wishlist.'); return; }
-
-    setError(null);
-    setMessage(null);
-
-    if (isInWishlist) {
-        try {
-            await apiRemoveFromWishlist(product.id, token);
-            setMessage('Item removed from your wishlist.');
-            setIsInWishlist(false);
-        } catch (err) {
-            // The API functions handle 401/403 errors by throwing an error message
-            setError(err.message || 'Failed to remove from wishlist');
-        }
-    } else {
-        try {
-            await apiAddToWishlist(product.id, token);
-            setMessage('Item added to your wishlist.');
-            setIsInWishlist(true);
-        } catch (err) {
-             // The API functions handle 409/401/403 errors by throwing an error message
-            if (err.message.includes("Product is already in your wishlist")) {
-                setMessage("Item is already in your wishlist!");
-                setIsInWishlist(true);
-            } else {
-                setError(err.message || 'Failed to add to wishlist');
-            }
-        }
+    if (!token) {
+      setError('Please log in to manage your wishlist.');
+      return;
+    }
+    try {
+      if (isInWishlist) {
+        await apiRemoveFromWishlist(product.id, token);
+        setMessage('Removed from your wishlist.');
+      } else {
+        await apiAddToWishlist(product.id, token);
+        setMessage('Added to your wishlist!');
+      }
+      setIsInWishlist(!isInWishlist); // Toggle the state
+    } catch (err) {
+      setError(err.message || 'An error occurred while updating your wishlist.');
     }
   }, [product, token, isInWishlist]);
 
-  if (loading) return <p className="text-secondary page-container">Loading product details...</p>;
-  if (!product) return <p className="text-error page-container">Product not found.</p>;
 
-  const currentStock = product.stock ?? 'N/A';
-  const isOutOfStock = typeof currentStock === 'number' && currentStock <= 0;
-  const low = typeof currentStock === 'number' && currentStock > 0 && currentStock <= 5;
+  // --- UI & Render ---
 
-  const stockClass = isOutOfStock ? 'text-error' : (low ? 'text-accent' : 'text-success');
+  // Effect to clear messages after a few seconds
+  useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+        setError(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, error]);
+
+  if (loading) {
+    return <p className="text-secondary page-container">Loading product details...</p>;
+  }
+
+  if (!product) {
+    return <p className="text-error page-container">{error || 'Product not found.'}</p>;
+  }
+
+  const isOutOfStock = product.stock <= 0;
 
   return (
-    <div className="page-container content-box product-layout">
-        {/* Left Column: Image and Actions */}
-        <div className="product-image-container" style={{ flex: '1 1 40%' }}>
-            <img
-                src={product.imageUrl ? `${API_BASE_URL}${product.imageUrl}` : 'https://placehold.co/500x500/F5F5F6/D4D5D9?text=PRODUCT'}
-                alt={product.name}
-                className="product-main-image"
-            />
+    <div className="page-container">
+      <div className="content-box" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
 
-            <div className="product-action-buttons" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button
-                    onClick={handleAddToCart}
-                    className={`primary-button cart-button ${isOutOfStock ? 'disabled-button' : ''}`}
-                    disabled={isOutOfStock}
-                    style={{ flex: 2, padding: '15px 0' }}
-                >
-                    {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO BAG'}
-                </button>
-
-                <button
-                    onClick={handleWishlistToggle}
-                    className="secondary-button wishlist-button"
-                    disabled={!token} // Disable if not logged in
-                    style={{ flex: 1, padding: '15px 0', borderColor: isInWishlist ? 'var(--color-primary)' : 'var(--color-secondary)', color: isInWishlist ? 'var(--color-primary)' : 'var(--color-secondary)' }}
-                >
-                    {isInWishlist ? '❤️ SAVED' : '🤍 WISHLIST'}
-                </button>
-            </div>
-
-            {role === 'ADMIN' && token && (
-                <Link to={`/products/${product.id}/edit`} className="secondary-button" style={{ marginTop: '1rem', display: 'block', textAlign: 'center' }}>
-                    EDIT PRODUCT (ADMIN)
-                </Link>
-            )}
-
+        {/* Left Column: Image */}
+        <div style={{ flex: '1 1 45%' }}>
+          <img
+            src={product.imageUrl ? `${API_BASE_URL}${product.imageUrl}` : 'https://placehold.co/500x500/F9FAFB/E5E7EB?text=Product'}
+            alt={product.name}
+            style={{ width: '100%', borderRadius: 'var(--border-radius)' }}
+          />
         </div>
 
-        {/* Right Column: Info and Price */}
-        <div className="product-info" style={{ flex: '1 1 60%', padding: '0 1rem' }}>
-            {error && <p className="text-error" style={{ marginBottom: '1rem' }}>{error}</p>}
-            {message && <p className="text-success" style={{ marginBottom: '1rem' }}>{message}</p>}
+        {/* Right Column: Details & Actions */}
+        <div style={{ flex: '1 1 55%' }}>
 
-            <h1 className="product-name" style={{ fontSize: '1.8rem', fontWeight: 600 }}>{product.name}</h1>
-            <p className="text-secondary" style={{ fontSize: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>Product Details & Availability</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>{product.name}</h1>
+          <p className="text-secondary" style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>{product.description}</p>
 
-            <p className="product-price" style={{ fontSize: '2rem', fontWeight: 700, margin: '1rem 0' }}>
-                ₹{product.price}
-                <span className="discount">(20% OFF)</span>
-            </p>
+          <p className="product-price" style={{ fontSize: '2.5rem', margin: '1.5rem 0' }}>
+            ₹{product.price}
+            <span className="product-discount">(20% OFF)</span>
+          </p>
 
-            <p className="text-secondary" style={{ marginBottom: '2rem' }}>
-                <strong style={{ color: 'var(--color-text-dark)' }}>Availability:</strong>
-                <span className={stockClass}> {isOutOfStock ? 'OUT OF STOCK' : `${currentStock} units available`}</span>
-            </p>
+          <p className="text-secondary" style={{ marginBottom: '2rem' }}>
+            <strong>Availability:</strong>
+            <span className={isOutOfStock ? 'text-error' : 'text-success'}>
+              {isOutOfStock ? ' Out of Stock' : ` ${product.stock} units available`}
+            </span>
+          </p>
 
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.8rem' }}>PRODUCT DESCRIPTION</h3>
-            <p className="text-secondary" style={{ lineHeight: 1.5 }}>{product.description}</p>
+          {/* Action Messages */}
+          {error && <p className="text-error" style={{ marginBottom: '1rem' }}>{error}</p>}
+          {message && <p className="text-success" style={{ marginBottom: '1rem' }}>{message}</p>}
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button
+              onClick={handleAddToCart}
+              className={`btn btn-primary ${isOutOfStock ? 'btn-disabled' : ''}`}
+              disabled={isOutOfStock}
+              style={{ flex: 2, padding: '15px' }}
+            >
+              <HiOutlineShoppingBag />
+              {isOutOfStock ? 'Out of Stock' : 'Add to Bag'}
+            </button>
+
+            <button
+              onClick={handleWishlistToggle}
+              className="btn btn-secondary"
+              disabled={!token}
+              style={{ flex: 1, padding: '15px' }}
+            >
+              {isInWishlist ? <HiHeart style={{ color: 'var(--color-accent)' }} /> : <HiOutlineHeart />}
+              Wishlist
+            </button>
+          </div>
+
+          {/* Admin Edit Link */}
+          {role === 'ADMIN' && (
+            <Link to={`/products/${id}/edit`} className="btn btn-secondary" style={{ marginTop: '1rem', display: 'block' }}>
+              Edit Product (Admin)
+            </Link>
+          )}
+
         </div>
+      </div>
     </div>
   );
 }

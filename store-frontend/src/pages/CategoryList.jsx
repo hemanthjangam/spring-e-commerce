@@ -1,8 +1,7 @@
-/* ========================= src/pages/CategoryList.jsx (Refactored & Styled) ========================= */
+/* ========================= src/pages/CategoryList.jsx (Refactored) ========================= */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllCategories } from '../api';
-import { API_BASE_URL } from '../api';
+import { getAllCategories, API_BASE_URL } from '../api';
 
 export default function CategoryList() {
   const [categories, setCategories] = useState([]);
@@ -16,7 +15,6 @@ export default function CategoryList() {
         const data = await getAllCategories();
         if (mounted) setCategories(data || []);
       } catch (err) {
-        console.error(err);
         if (mounted) setError(err.message || 'Failed to load categories');
       } finally {
         if (mounted) setLoading(false);
@@ -30,7 +28,7 @@ export default function CategoryList() {
 
   return (
     <div className="page-container" style={{ paddingBottom: '50px' }}>
-      <h1 className="page-header">SHOP BY TOP COLLECTIONS</h1>
+      <h1 className="page-header">Shop by Collection</h1>
 
       <div className="category-grid">
         {categories.map(cat => (
@@ -42,22 +40,22 @@ export default function CategoryList() {
           >
             <div className="category-card">
               <img
-                // Use the base URL constant for image path resolution
-                src={cat.imageUrl ? `${API_BASE_URL}${cat.imageUrl}` : 'https://placehold.co/400x350/F5F5F6/D4D5D9?text=CATEGORY'}
+                src={cat.imageUrl ? `${API_BASE_URL}${cat.imageUrl}` : 'https://placehold.co/400x380/F9FAFB/E5E7EB?text=Collection'}
                 alt={cat.name}
                 className="category-image"
               />
               <div className="category-info-box">
                 <strong className="category-name">{cat.name}</strong>
-                <p className="text-accent" style={{ marginTop: '0.5rem', fontWeight: 600 }}>Explore Now &rarr;</p>
               </div>
             </div>
           </Link>
         ))}
       </div>
 
-      <div style={{ textAlign: 'center', marginTop: '5rem' }}>
-        <Link to="/category/all" className="primary-button" style={{ padding: '15px 30px', fontSize: '1.1rem' }}>VIEW ALL PRODUCTS</Link>
+      <div style={{ textAlign: 'center', marginTop: '4rem' }}>
+        <Link to="/category/all" className="btn btn-primary" style={{ padding: '15px 30px', fontSize: '1rem' }}>
+          View All Products
+        </Link>
       </div>
     </div>
   );
