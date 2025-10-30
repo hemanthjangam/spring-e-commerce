@@ -11,6 +11,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @AllArgsConstructor
@@ -123,5 +124,16 @@ public class ProductController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/search")
+    public List<ProductDto> searchProducts(@RequestParam("q") String query) {
+        // Call the new repository method
+        List<Product> products = productRepository.searchProducts(query);
+
+        // Map results to DTOs and return
+        return products.stream()
+                .map(productMapper::toDto)
+                .collect(Collectors.toList());
     }
 }

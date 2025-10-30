@@ -1,9 +1,10 @@
-/* ========================= src/App.js (Refactored) ========================= */
+/* ========================= src/App.js (Search Route Added) ========================= */
 import React, { useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { getCartItemCount } from "./api";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
+import './App.css'; // Make sure this import is here
 
 // --- Components ---
 import NavBar from "./components/NavBar";
@@ -20,8 +21,9 @@ import OrderPage from "./pages/OrderPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
-import CheckoutCancelPage from "./pages/CheckoutCancelPage";
+import CheckoutCancelPage from "./pages/CheckoutCancelPage"; // <-- Typo fixed
 import ProfilePage from "./pages/ProfilePage";
+import SearchPage from "./pages/SearchPage"; // <-- 1. IMPORT NEW PAGE
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
@@ -71,10 +73,11 @@ function App() {
     <Router>
       <AuthProvider value={authContextValue}>
         <CartProvider>
-          <NavBar handleLogout={handleLogout} />
+          <NavBar />
           <main>
             <Routes>
               <Route path="/" element={<CategoryList />} />
+              <Route path="/search" element={<SearchPage />} /> {/* <-- 2. ADD NEW ROUTE */}
               <Route path="/category/:categoryId" element={<ProductListByCategory />} />
               <Route path="/products/:id" element={<ProductDetails />} />
               <Route path="/products/new" element={<CreateProduct />} />

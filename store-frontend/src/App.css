@@ -1,4 +1,4 @@
-/* ========================= src/App.css (Myntra Layout and Nav) ========================= */
+/* ========================= src/App.css (Myntra + Search + Suggestions) ========================= */
 
 /* --- 1. Navigation Bar (Myntra Header Style) --- */
 .nav-bar {
@@ -8,11 +8,20 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 40px;
-  height: 80px; /* Taller for prominence */
+  height: 80px;
   position: sticky;
   top: 0;
   z-index: 1000;
   box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+  gap: 20px;
+}
+
+/* --- 1a. Nav Left (Logo & Links) --- */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
 }
 
 .nav-brand {
@@ -34,7 +43,7 @@
   text-decoration: none;
   font-weight: 600;
   padding: 0 15px;
-  height: 80px; /* Matches nav height for full-height border on hover */
+  height: 80px;
   display: flex;
   align-items: center;
   text-transform: uppercase;
@@ -48,12 +57,110 @@
     border-bottom: 3px solid var(--color-primary);
 }
 
-/* Action Icons (Cart, Wishlist, User) container */
+
+/* --- 1b. Nav Center (Search Container) --- */
+
+/* This new container wrapper gets the flex layout styles */
+.nav-search-container {
+    flex: 1 1 auto; /* Allow it to grow and fill space */
+    max-width: 600px; /* Set a max width */
+    position: relative;
+}
+
+/* The search bar itself just holds the icon and input */
+.nav-search-bar {
+    position: relative;
+    background-color: var(--color-background-light);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
+    z-index: 1002; /* Ensures it's above the dropdown */
+}
+
+.search-icon {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: var(--color-text-light);
+    font-size: 1.25rem;
+}
+
+.search-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 12px 20px 12px 50px; /* 50px left padding for icon */
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+    outline: none;
+}
+.search-input::placeholder {
+    color: var(--color-text-light);
+}
+
+
+/* --- 1c. Search Suggestions Dropdown --- */
+.search-suggestions {
+    list-style: none;
+    padding: 8px 0;
+    margin: 0;
+    position: absolute;
+    top: calc(100% - 10px); /* Position below search bar, with slight overlap */
+    left: 0;
+    right: 0;
+    background: var(--color-background-white);
+    border: 1px solid var(--color-border);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+    z-index: 1001; /* Below the search bar, above the page */
+    overflow: hidden;
+}
+
+.suggestion-item {
+    padding: 0 8px;
+}
+
+.suggestion-link {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: var(--color-text-dark);
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s;
+}
+
+.suggestion-link:hover {
+    background-color: var(--color-background-light);
+}
+
+.suggestion-image {
+    width: 40px;
+    height: 50px;
+    object-fit: cover;
+    margin-right: 12px;
+    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+}
+
+.suggestion-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* --- 1d. Nav Right (Action Icons) --- */
 .nav-actions-group {
     display: flex;
     align-items: center;
     gap: 25px;
     margin-left: 20px;
+    flex-shrink: 0;
 }
 .nav-action-link {
     display: flex;
@@ -66,7 +173,7 @@
     line-height: 1;
     position: relative;
     transition: color 0.2s;
-    min-width: 40px; /* Ensures consistent sizing */
+    min-width: 40px;
     text-align: center;
 }
 .nav-action-link:hover { color: var(--color-primary); }
@@ -84,7 +191,7 @@
     line-height: 1;
 }
 
-/* Logout Button in Nav (styled as a small link/text) */
+/* Logout Button (No longer used in Nav) */
 .nav-logout-button {
     padding: 4px 10px;
     font-size: 0.75rem;
@@ -102,7 +209,6 @@
 
 /* --- 2. Profile/Account Menu Layout (for ProfilePage.jsx) --- */
 .account-menu {
-    /* desktop */
     border-right: 1px solid var(--color-border);
     padding-right: 2rem;
 }
@@ -123,22 +229,33 @@
     font-weight: 600;
 }
 
-/* --- 3. Responsive Adjustments (Mobile First) --- */
+/* --- 3. Responsive Adjustments --- */
 @media (max-width: 768px) {
     .nav-bar {
-        height: 50px;
-        padding: 0 10px;
+        height: auto;
+        padding: 10px;
+        flex-wrap: wrap;
+        gap: 10px;
     }
     .nav-brand {
         font-size: 1.5rem;
     }
+    .nav-left {
+        width: 100%;
+        justify-content: space-between;
+    }
     .nav-links-container .nav-link:not(.admin-link) {
-        display: none; /* Hide main links on small screens */
+        display: none;
+    }
+    .nav-search-container {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
     }
     .nav-actions-group {
         gap: 10px;
     }
-    .nav-action-link span { display: none; } /* Hide text labels below icons */
+    .nav-action-link span { display: none; }
 
     .account-menu {
         border-right: none;

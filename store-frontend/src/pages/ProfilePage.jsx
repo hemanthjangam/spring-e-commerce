@@ -12,10 +12,7 @@ export default function ProfilePage() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!token) {
-            navigate('/login');
-            return;
-        }
+        // ...
         (async () => {
             try {
                 const { data } = await apiClient.get('/profile');

@@ -9,4 +9,5 @@ public class CartItemDto {
     private CartProductDto product;
     private int quantity;
     private BigDecimal totalPrice;
+    private String imageUrl;
 }
