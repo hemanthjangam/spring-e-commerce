@@ -1,4 +1,3 @@
-/* ========================= src/pages/ProductListByCategory.jsx (Refactored) ========================= */
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { getProductsByCategory, API_BASE_URL } from '../api';

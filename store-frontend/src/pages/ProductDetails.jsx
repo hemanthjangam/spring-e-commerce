@@ -25,9 +25,7 @@ export default function ProductDetails() {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
 
-  // --- Data Fetching ---
 
-  // Fetch main product details on component load
   useEffect(() => {
     let isMounted = true;
     const fetchProduct = async () => {
@@ -57,7 +55,6 @@ export default function ProductDetails() {
     };
   }, [id]);
 
-  // Check wishlist status when product or token changes
   useEffect(() => {
     if (!token || !product) {
       setIsInWishlist(false);
@@ -76,13 +73,11 @@ export default function ProductDetails() {
   }, [product, token]);
 
 
-  // --- WebSocket for Live Inventory ---
 
   const topic = product ? `inventory/${product.id}` : null;
   const realTimeUpdate = useWebSocket(topic);
 
   useEffect(() => {
-    // This is the robust check to prevent crashes from null or malformed messages
     if (
       realTimeUpdate &&
       product &&
@@ -96,7 +91,6 @@ export default function ProductDetails() {
   }, [realTimeUpdate, product]);
 
 
-  // --- User Actions ---
 
   const handleAddToCart = useCallback(async () => {
     if (product.stock <= 0) {
@@ -138,9 +132,7 @@ export default function ProductDetails() {
   }, [product, token, isInWishlist]);
 
 
-  // --- UI & Render ---
 
-  // Effect to clear messages after a few seconds
   useEffect(() => {
     if (message || error) {
       const timer = setTimeout(() => {
@@ -165,7 +157,6 @@ export default function ProductDetails() {
     <div className="page-container">
       <div className="content-box" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
 
-        {/* Left Column: Image */}
         <div style={{ flex: '1 1 45%' }}>
           <img
             src={product.imageUrl ? `${API_BASE_URL}${product.imageUrl}` : 'https://placehold.co/500x500/F9FAFB/E5E7EB?text=Product'}
@@ -174,7 +165,6 @@ export default function ProductDetails() {
           />
         </div>
 
-        {/* Right Column: Details & Actions */}
         <div style={{ flex: '1 1 55%' }}>
 
           <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>{product.name}</h1>
@@ -192,11 +182,9 @@ export default function ProductDetails() {
             </span>
           </p>
 
-          {/* Action Messages */}
           {error && <p className="text-error" style={{ marginBottom: '1rem' }}>{error}</p>}
           {message && <p className="text-success" style={{ marginBottom: '1rem' }}>{message}</p>}
 
-          {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button
               onClick={handleAddToCart}
@@ -219,7 +207,6 @@ export default function ProductDetails() {
             </button>
           </div>
 
-          {/* Admin Edit Link */}
           {role === 'ADMIN' && (
             <Link to={`/products/${id}/edit`} className="btn btn-secondary" style={{ marginTop: '1rem', display: 'block' }}>
               Edit Product (Admin)

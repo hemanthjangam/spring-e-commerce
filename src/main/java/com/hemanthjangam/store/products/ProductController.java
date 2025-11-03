@@ -44,10 +44,6 @@ public class ProductController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    /**
-     * Admin Write: Creates a new product (Multipart Form Data).
-     * FIX: Revert to multipart to accept file and JSON part.
-     */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> createProduct(
@@ -64,7 +60,6 @@ public class ProductController {
             String imageUrl = fileStorageService.storeFile(file);
             productDto.setImageUrl(imageUrl); // Save the URL to the DTO
         } else {
-            // Return error if file is missing on creation
             return ResponseEntity.badRequest().body(null);
         }
 
@@ -81,15 +76,12 @@ public class ProductController {
         return ResponseEntity.created(uri).body(savedDto);
     }
 
-    /**
-     * Admin Write: Updates an existing product (Multipart Form Data).
-     */
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> updateProduct(
             @PathVariable Long id,
             @RequestPart("product") ProductDto productDto,
-            @RequestPart(value = "file", required = false) MultipartFile file) { // File is optional on update
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
         var product = productRepository.findById(id).orElse(null);
         if(product == null) {
@@ -105,7 +97,6 @@ public class ProductController {
             String imageUrl = fileStorageService.storeFile(file);
             productDto.setImageUrl(imageUrl);
         } else if (productDto.getImageUrl() == null && product.getImageUrl() != null) {
-            // If DTO explicitly sets imageUrl to null (user removed existing image, though component doesn't currently support this directly)
             product.setImageUrl(null);
         }
 
@@ -128,10 +119,8 @@ public class ProductController {
 
     @GetMapping("/search")
     public List<ProductDto> searchProducts(@RequestParam("q") String query) {
-        // Call the new repository method
         List<Product> products = productRepository.searchProducts(query);
 
-        // Map results to DTOs and return
         return products.stream()
                 .map(productMapper::toDto)
                 .collect(Collectors.toList());

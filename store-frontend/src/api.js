@@ -1,9 +1,5 @@
-/* ========================= src/api.js (FINAL FIX: Exporting All Named Functions) ========================= */
-
-// Export the constant directly
 export const API_BASE_URL = "http://localhost:8080";
 
-// Helper function to set Authorization header
 const getAuthHeaders = (token, contentType = 'application/json') => {
   const headers = {};
   if (contentType) {
@@ -15,8 +11,6 @@ const getAuthHeaders = (token, contentType = 'application/json') => {
   return headers;
 };
 
-// ================= CART API (Exports added to functions) =================
-// ... (your existing createCart, getCart, etc. functions)
 export const createCart = async (token = null) => { // <-- EXPORT ADDED
   const res = await fetch(`${API_BASE_URL}/carts`, {
     method: "POST",
@@ -72,8 +66,6 @@ export const removeFromCart = async (cartId, productId, token = null) => { // <-
   return true;
 };
 
-// ================= WISHLIST API (Exports added to functions) =================
-// ... (your existing wishlist functions)
 export const getWishlist = async (token) => { // <-- EXPORT ADDED
   if (!token) throw new Error("Login required to fetch wishlist");
   const res = await fetch(`${API_BASE_URL}/wishlist`, {
@@ -115,8 +107,6 @@ export const removeFromWishlist = async (productId, token) => { // <-- EXPORT AD
 };
 
 
-// ================= ORDERS API (Exports added to functions) =================
-// ... (your existing order functions)
 export const getAllOrders = async (token) => { // <-- EXPORT ADDED
   if (!token) throw new Error("Login required to fetch orders");
   const res = await fetch(`${API_BASE_URL}/orders`, {
@@ -143,8 +133,6 @@ export const getOrderDetails = async (orderId, token) => { // <-- EXPORT ADDED
   return await res.json();
 };
 
-// ================= CHECKOUT API (Exports added to functions) =================
-// ... (your existing checkout function)
 export const initiateCheckout = async (cartId, token) => { // <-- EXPORT ADDED
   if (!token) throw new Error("Login required to checkout");
   if (!cartId) throw new Error("Cart ID is missing");
@@ -160,7 +148,6 @@ export const initiateCheckout = async (cartId, token) => { // <-- EXPORT ADDED
   return await res.json();
 };
 
-// ================= CATEGORY & PRODUCT API (Exports added to functions) =================
 
 export const getAllCategories = async () => { // <-- EXPORT ADDED
   const res = await fetch(`${API_BASE_URL}/categories`);
@@ -178,9 +165,6 @@ export const getProductsByCategory = async (categoryId) => { // <-- EXPORT ADDED
     return await res.json();
 };
 
-// ======================================================
-//     NEW FUNCTION FOR SEARCH
-// ======================================================
 export const searchProducts = async (query) => {
   const res = await fetch(`${API_BASE_URL}/products/search?q=${encodeURIComponent(query)}`);
   if (!res.ok) throw new Error(`Failed to search for: ${query}`);

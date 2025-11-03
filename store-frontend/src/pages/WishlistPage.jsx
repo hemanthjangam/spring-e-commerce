@@ -1,4 +1,3 @@
-/* ========================= src/pages/WishlistPage.jsx (Refactored) ========================= */
 import React, { useEffect, useState } from "react";
 import { useAuth } from '../contexts/AuthContext';
 import { getWishlist, removeFromWishlist, API_BASE_URL } from "../api";

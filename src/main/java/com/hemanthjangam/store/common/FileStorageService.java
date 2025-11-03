@@ -13,24 +13,16 @@ import java.util.UUID;
 
 @Service
 public class FileStorageService {
-    // Defines the base URL where the images can be served (e.g., http://localhost:8080/images)
     public static final String BASE_URL_PATH = "/images/";
 
-    // Directory where the files will be physically saved on the server
-    @Value("${file.upload-dir}") // Set this property in application.properties/yaml
+    @Value("${file.upload-dir}")
     private String uploadDir;
 
-    /**
-     * Saves the uploaded file to the local file system.
-     * @param file The file uploaded via MultipartRequest.
-     * @return The public URL path (e.g., /images/uuid-filename.jpg).
-     */
     public String storeFile(MultipartFile file) {
         if (file.isEmpty()) {
             throw new RuntimeException("Cannot store empty file.");
         }
 
-        // Ensure the upload directory exists
         Path uploadPath = Paths.get(uploadDir);
         try {
             Files.createDirectories(uploadPath);
@@ -39,7 +31,6 @@ public class FileStorageService {
         }
 
         try {
-            // Normalize filename and prepend a UUID to ensure uniqueness
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
             String fileName = UUID.randomUUID().toString() + extension;
@@ -47,7 +38,6 @@ public class FileStorageService {
             Path filePath = uploadPath.resolve(fileName);
             file.transferTo(filePath.toFile());
 
-            // Return the public URL path that the frontend will use to display the image
             return BASE_URL_PATH + fileName;
 
         } catch (IOException ex) {

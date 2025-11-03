@@ -1,4 +1,3 @@
-/* ========================= src/pages/CheckoutCancelPage.jsx (Refactored) ========================= */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { HiXCircle } from 'react-icons/hi';

@@ -1,4 +1,3 @@
-/* ========================= src/pages/OrderPage.jsx (Refactored) ========================= */
 import React, { useEffect, useState } from 'react';
 import { getAllOrders, getOrderDetails } from '../api';
 import { useAuth } from '../contexts/AuthContext';

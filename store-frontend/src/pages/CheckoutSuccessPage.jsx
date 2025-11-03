@@ -1,4 +1,3 @@
-/* ========================= src/pages/CheckoutSuccessPage.jsx (Refactored) ========================= */
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { HiCheckCircle } from 'react-icons/hi';

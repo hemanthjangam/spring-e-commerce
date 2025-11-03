@@ -1,4 +1,3 @@
-/* ========================= src/pages/CategoryList.jsx (Refactored) ========================= */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllCategories, API_BASE_URL } from '../api';

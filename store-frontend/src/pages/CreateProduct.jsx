@@ -1,4 +1,3 @@
-/* ========================= src/pages/CreateProduct.jsx (Refactored) ========================= */
 import React, { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductForm from '../components/ProductForm';

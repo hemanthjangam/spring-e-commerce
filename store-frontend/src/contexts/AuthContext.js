@@ -1,4 +1,3 @@
-/* ========================= src/contexts/AuthContext.jsx (Logic Only) ========================= */
 import React, { createContext, useContext } from 'react';
 
 const AuthContext = createContext({

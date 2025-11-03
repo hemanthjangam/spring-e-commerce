@@ -23,7 +23,6 @@ public class Category {
     @Column(name = "name")
     private String name;
 
-    // NEW FIELD for category image/icon
     @Column(name = "image_url")
     private String imageUrl;
 

@@ -1,4 +1,3 @@
-/* ========================= src/pages/SearchPage.jsx (NEW FILE) ========================= */
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { searchProducts, API_BASE_URL } from '../api'; // Make sure to import from api.js
@@ -12,7 +11,6 @@ export default function SearchPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Don't search if the query is empty
     if (!query) {
       setProducts([]);
       setLoading(false);
@@ -23,7 +21,6 @@ export default function SearchPage() {
       setLoading(true);
       setError(null);
       try {
-        // Call the new API function
         const data = await searchProducts(query);
         setProducts(data || []);
       } catch (err) {
@@ -32,7 +29,7 @@ export default function SearchPage() {
         setLoading(false);
       }
     })();
-  }, [query]); // Re-run the effect whenever the query in the URL changes
+  }, [query]);
 
   if (loading) return <p className="text-secondary page-container">Searching...</p>;
   if (error) return <p className="text-error page-container">{error}</p>;
@@ -52,7 +49,6 @@ export default function SearchPage() {
             <div key={prod.id} className="product-card">
               <Link to={`/products/${prod.id}`}>
                 <img
-                  // Use the same image logic as your other pages
                   src={prod.imageUrl ? `${API_BASE_URL}${prod.imageUrl}` : 'https://placehold.co/300/F9FAFB/E5E7EB?text=Product'}
                   alt={prod.name}
                   className="product-image"

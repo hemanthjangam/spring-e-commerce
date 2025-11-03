@@ -1,4 +1,3 @@
-/* ========================= src/pages/Home.jsx (Minimalist) ========================= */
 import React from 'react';
 import CategoryList from './CategoryList';
 

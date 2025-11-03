@@ -1,4 +1,3 @@
-/* ========================= src/pages/ProfilePage.jsx (Refactored) ========================= */
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.js';
 import { Link, useNavigate } from 'react-router-dom';

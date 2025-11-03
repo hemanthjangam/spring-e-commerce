@@ -24,5 +24,4 @@ public class WishlistItem {
     @JsonIgnoreProperties({"wishlistItems", "category", "hibernateLazyInitializer"})
     private Product product;
 
-    // equals(), hashCode() based on id omitted for brevity
 }

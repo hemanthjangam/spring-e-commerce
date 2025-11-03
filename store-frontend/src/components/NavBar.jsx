@@ -1,24 +1,25 @@
-/* ========================= src/components/NavBar.jsx (Live Suggestions) ========================= */
+/* ========================= src/components/NavBar.jsx (Admin Links Added) ========================= */
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { HiOutlineShoppingBag, HiOutlineHeart, HiOutlineUser, HiOutlineLogin, HiOutlineSearch } from 'react-icons/hi';
 
-import { useDebounce } from '../hooks/useDebounce'; // <-- 1. Import the hook
-import { searchProducts, API_BASE_URL } from '../api'; // <-- 2. Import search API
+import { useDebounce } from '../hooks/useDebounce';
+import { searchProducts, API_BASE_URL } from '../api';
 
 const NavBar = () => {
-    const { token } = useAuth();
+    // Destructure role to show/hide admin links
+    const { token, role } = useAuth();
     const { cartItemCount } = useCart();
     const navigate = useNavigate();
 
     // --- State for Search Suggestions ---
-    const [searchQuery, setSearchQuery] = useState(''); // Live value from input
-    const [suggestions, setSuggestions] = useState([]); // API results
+    const [searchQuery, setSearchQuery] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
     const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
-    const debouncedQuery = useDebounce(searchQuery, 300); // Debounced value (300ms delay)
-    const searchRef = useRef(null); // Ref to the search bar container
+    const debouncedQuery = useDebounce(searchQuery, 300);
+    const searchRef = useRef(null);
 
     // --- Effect to fetch suggestions ---
     useEffect(() => {
@@ -38,11 +39,9 @@ const NavBar = () => {
             setSuggestions([]);
             setIsSuggestionsOpen(false);
         }
-    }, [debouncedQuery]); // This effect runs only when the *debounced* query changes
+    }, [debouncedQuery]);
 
     // --- Handlers ---
-
-    // Handles pressing "Enter"
     const handleSearchSubmit = (e) => {
         if (e.key === 'Enter' && searchQuery.trim() !== '') {
             navigate(`/search?q=${searchQuery.trim()}`);
@@ -51,18 +50,16 @@ const NavBar = () => {
         }
     };
 
-    // Handles typing in the input
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
     };
 
-    // Close dropdown when a suggestion is clicked
     const handleSuggestionClick = () => {
         setSearchQuery('');
         setIsSuggestionsOpen(false);
     };
 
-    // Close dropdown when clicking outside
+    // Close suggestions when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -82,11 +79,33 @@ const NavBar = () => {
                 <Link to="/" className="nav-brand">MSTORE</Link>
                 <div className="nav-links-container">
                     <NavLink to="/category/all" className="nav-link">Shop</NavLink>
+
+                    {/* --- Admin Links --- */}
+                    {token && role === 'ADMIN' && (
+                        <>
+                            <NavLink
+                                to="/products/new"
+                                className="nav-link admin-link"
+                            >
+                                Add Product
+                            </NavLink>
+
+                            {/* --- NEW: Add Category Link --- */}
+                            <NavLink
+                                to="/categories/new"
+                                className="nav-link admin-link"
+                            >
+                                Add Category
+                            </NavLink>
+                        </>
+                    )}
+                    {/* --- End Admin Links --- */}
+
                 </div>
             </div>
 
             {/* --- Center: Search Bar --- */}
-            <div className="nav-search-container" ref={searchRef}> {/* 3. Wrapper for suggestions */}
+            <div className="nav-search-container" ref={searchRef}>
                 <div className="nav-search-bar">
                     <HiOutlineSearch className="search-icon" />
                     <input
@@ -100,10 +119,9 @@ const NavBar = () => {
                     />
                 </div>
 
-                {/* --- 4. Live Suggestions Dropdown --- */}
                 {isSuggestionsOpen && suggestions.length > 0 && (
                     <ul className="search-suggestions">
-                        {suggestions.slice(0, 5).map(product => ( // Show top 5
+                        {suggestions.slice(0, 5).map(product => (
                             <li key={product.id} className="suggestion-item">
                                 <Link
                                     to={`/products/${product.id}`}

@@ -1,4 +1,3 @@
-/* ========================= src/contexts/CartContext.jsx (Logic Only) ========================= */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { getCartItemCount } from '../api';
@@ -36,14 +35,12 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartId, token]);
 
-  // Initial load of cart item count
   useEffect(() => {
     if (cartId) {
       refreshCount();
     }
   }, [cartId, refreshCount]);
 
-  // Effect to update local storage when cartId changes
   useEffect(() => {
     if (cartId) {
       localStorage.setItem(localKey, cartId);
@@ -52,7 +49,6 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartId, localKey]);
 
-  // Effect to sync cartId when userId/token changes (i.e., on login/logout)
   useEffect(() => {
     const currentId = localStorage.getItem(localKey);
     setCartId(currentId);

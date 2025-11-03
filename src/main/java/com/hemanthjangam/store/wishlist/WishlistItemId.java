@@ -14,7 +14,6 @@ import java.io.Serializable;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-// Lombok generates equals() and hashCode() based on the fields marked with @EqualsAndHashCode.Include
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class WishlistItemId implements Serializable {
 

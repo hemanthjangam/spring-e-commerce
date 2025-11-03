@@ -1,9 +1,6 @@
-/* ========================= src/api/apiClient.js (FINAL FIX) ========================= */
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
-/**
- * Global function to handle 401/403 errors: clears token and forces logout/redirect.
- */
+
 const handleUnauthorized = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
@@ -19,12 +16,9 @@ const handleUnauthorized = () => {
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  // CRITICAL FIX: Removed default 'Content-Type: application/json' header
-  // to avoid conflicts with multipart/form-data.
   timeout: 10000,
 });
 
-// --- 1. Request Interceptor: Attach JWT Token ---
 apiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -35,7 +29,6 @@ apiClient.interceptors.request.use(config => {
   return Promise.reject(error);
 });
 
-// --- 2. Response Interceptor: Handle 401/403 Errors ---
 apiClient.interceptors.response.use(
   response => response,
   error => {
@@ -49,5 +42,9 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const createCategory = (formData) => {
+    return apiClient.post('/categories', formData);
+};
 
 export default apiClient;

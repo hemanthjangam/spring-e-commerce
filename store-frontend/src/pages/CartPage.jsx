@@ -1,4 +1,3 @@
-/* ========================= src/pages/CartPage.jsx (Refactored) ========================= */
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';

@@ -1,4 +1,3 @@
-/* ========================= src/App.js (Search Route Added) ========================= */
 import React, { useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { getCartItemCount } from "./api";
@@ -6,10 +5,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import './App.css'; // Make sure this import is here
 
-// --- Components ---
 import NavBar from "./components/NavBar";
 
-// --- Pages ---
 import CategoryList from "./pages/CategoryList";
 import ProductListByCategory from "./pages/ProductListByCategory";
 import ProductDetails from "./pages/ProductDetails";
@@ -24,6 +21,7 @@ import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import CheckoutCancelPage from "./pages/CheckoutCancelPage"; // <-- Typo fixed
 import ProfilePage from "./pages/ProfilePage";
 import SearchPage from "./pages/SearchPage"; // <-- 1. IMPORT NEW PAGE
+import CreateCategory from "./pages/CreateCategory";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
@@ -82,6 +80,7 @@ function App() {
               <Route path="/products/:id" element={<ProductDetails />} />
               <Route path="/products/new" element={<CreateProduct />} />
               <Route path="/products/:id/edit" element={<EditProduct />} />
+              <Route path="/categories/new" element={<CreateCategory />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/cart" element={<CartPage />} />

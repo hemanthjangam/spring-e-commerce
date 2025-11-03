@@ -1,4 +1,3 @@
-/* ========================= src/pages/EditProduct.jsx (Refactored) ========================= */
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ProductForm from '../components/ProductForm.jsx';
