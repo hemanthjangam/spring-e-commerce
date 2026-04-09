@@ -35,11 +35,17 @@
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -180,9 +186,9 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>11.7.2</version>
                 <configuration>
-                    <url>jdbc:mysql://localhost:3306/store?createDatabaseIfNotExist=true</url>
-                    <user>root</user>
-                    <password>Bunny@15052005</password>
+                    <url>${flyway.url}</url>
+                    <user>${flyway.user}</user>
+                    <password>${flyway.password}</password>
                     <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>

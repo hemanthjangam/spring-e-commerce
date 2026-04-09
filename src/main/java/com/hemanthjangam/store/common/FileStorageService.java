@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +19,7 @@ public class FileStorageService {
 
     public String storeFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new RuntimeException("Cannot store empty file.");
+            throw new IllegalArgumentException("Cannot store empty file.");
         }
 
         Path uploadPath = Paths.get(uploadDir);
@@ -32,7 +31,10 @@ public class FileStorageService {
 
         try {
             String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
             String fileName = UUID.randomUUID().toString() + extension;
 
             Path filePath = uploadPath.resolve(fileName);

@@ -55,19 +55,17 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Authorize
         http
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement( c ->
                         c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(c -> {
+                    // Keep module-specific rules close to each feature instead of one large security file.
                     featureSecurityRules.forEach(r -> r.configure(c));
                     c.requestMatchers(HttpMethod.GET, FileStorageService.BASE_URL_PATH + "**").permitAll();
-                        c.anyRequest().authenticated();
-                    }
-                )
+                    c.anyRequest().authenticated();
+                })
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(c -> {
                     c.authenticationEntryPoint(

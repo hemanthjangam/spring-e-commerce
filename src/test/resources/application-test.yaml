@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:store-test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+  jwt:
+    secret: test-secret-key-test-secret-key-test-secret-key
+    accessTokenExpiration: 7200
+    refreshTokenExpiration: 604800
+stripe:
+  secretKey: test
+  webhookSecretKey: test
+websiteUrl: http://localhost:4242
+file:
+  upload-dir: ${java.io.tmpdir}/store-test-uploads

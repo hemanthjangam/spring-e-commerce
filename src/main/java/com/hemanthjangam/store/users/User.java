@@ -61,6 +61,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     @JsonIgnore
+    @Builder.Default
     private Set<Product> favoriteProducts = new HashSet<>();
 
     public void addFavoriteProduct(Product product) {

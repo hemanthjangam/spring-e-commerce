@@ -41,5 +41,6 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     @JsonIgnore
+    @Builder.Default
     private Set<WishlistItem> wishlistItems = new HashSet<>();
 }

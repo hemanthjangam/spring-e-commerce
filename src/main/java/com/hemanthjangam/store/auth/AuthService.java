@@ -1,20 +1,33 @@
 package com.hemanthjangam.store.auth;
 
 import com.hemanthjangam.store.users.User;
+import com.hemanthjangam.store.users.UserNotFoundException;
 import com.hemanthjangam.store.users.UserRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class AuthService {
     private final UserRepository userRepository;
-    public User getCurrentUser() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        var userId = (Long) authentication.getPrincipal();
-        var user = userRepository.findById(userId).orElse(null);
 
-        return userRepository.findById(userId).orElse(null);
+    public User getCurrentUser() {
+        return userRepository.findById(getCurrentUserId())
+                .orElseThrow(UserNotFoundException::new);
+    }
+
+    public Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken
+                || !(authentication.getPrincipal() instanceof Long userId)) {
+            throw new IllegalStateException("Authenticated user not found in security context");
+        }
+
+        return userId;
     }
 }

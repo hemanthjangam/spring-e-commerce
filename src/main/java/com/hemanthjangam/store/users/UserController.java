@@ -2,19 +2,14 @@ package com.hemanthjangam.store.users;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.Map;
 
 @RestController
 @AllArgsConstructor
 @RequestMapping("/users")
 public class UserController {
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
     private final UserService userService;
 
     @GetMapping
@@ -45,7 +40,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(
             @PathVariable(name = "id") Long id,
-            @RequestBody UpdateUserRequest request) {
+            @Valid @RequestBody UpdateUserRequest request) {
         var userDto = userService.updateUser(id, request);
 
         return ResponseEntity.ok(userDto);
@@ -60,25 +55,9 @@ public class UserController {
     @PostMapping("/{id}/change-password")
     public ResponseEntity<Void> changePassword(
             @PathVariable Long id,
-            @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(id, request);
 
         return ResponseEntity.noContent().build();
     }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Map<String , String>> handleUserNotFound() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
-    }
-
-    @ExceptionHandler(EmailAlreadyRegisteredException.class)
-    public ResponseEntity<Map<String, String>> emailAlreadyExists() {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Email already registered."));
-    }
-
-    @ExceptionHandler(UnauthorizedUserException.class)
-    public ResponseEntity<HttpStatus> unauthorized() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
 }

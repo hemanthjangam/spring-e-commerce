@@ -1,6 +1,5 @@
 package com.hemanthjangam.store.wishlist;
 
-import com.hemanthjangam.store.products.ProductNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,30 +22,22 @@ public class WishlistController {
     }
 
     @GetMapping
-    public List<WishlistItem> getWishlist(@AuthenticationPrincipal Long userId) {
+    public List<WishlistItemDto> getWishlist(@AuthenticationPrincipal Long userId) {
         ensureAuthenticated(userId);
         return wishlistService.getWishlist(userId);
     }
 
     @PostMapping("/{productId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public WishlistItem addToWishlist(@AuthenticationPrincipal Long userId, @PathVariable Long productId) {
+    public WishlistItemDto addToWishlist(@AuthenticationPrincipal Long userId, @PathVariable Long productId) {
         ensureAuthenticated(userId);
-        try {
-            return wishlistService.addToWishlist(userId, productId);
-        } catch (AlreadyInWishlistException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        }
+        return wishlistService.addToWishlist(userId, productId);
     }
 
     @DeleteMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFromWishlist(@AuthenticationPrincipal Long userId, @PathVariable Long productId) {
         ensureAuthenticated(userId);
-        try {
-            wishlistService.removeFromWishlist(userId, productId);
-        } catch (ProductNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+        wishlistService.removeFromWishlist(userId, productId);
     }
 }

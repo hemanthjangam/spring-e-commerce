@@ -9,10 +9,11 @@ import com.hemanthjangam.store.auth.AuthService;
 import com.hemanthjangam.store.carts.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CheckoutService {
@@ -24,11 +25,9 @@ public class CheckoutService {
 
 
     @Transactional
-    public CheckoutResponse checkout(@Valid @RequestBody CheckoutRequest request) {
-        var cart = cartRepository.getCartWithItems(request.getCartId()).orElse(null);
-        if (cart == null) {
-            throw new CartNotFoundException();
-        }
+    public CheckoutResponse checkout(@Valid CheckoutRequest request) {
+        var cart = cartRepository.getCartWithItems(request.getCartId())
+                .orElseThrow(CartNotFoundException::new);
 
         if (cart.isEmpty()) {
             throw new CartEmptyException();
@@ -46,7 +45,7 @@ public class CheckoutService {
             return new CheckoutResponse(order.getId(), session.getCheckoutUrl());
         }
         catch (PaymentException exception) {
-            System.out.println(exception.getMessage());
+            log.warn("Checkout session creation failed for order {}", order.getId(), exception);
             orderRepository.delete(order);
             throw exception;
         }

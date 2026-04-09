@@ -1,6 +1,5 @@
 package com.hemanthjangam.store.carts;
 
-import com.hemanthjangam.store.products.ProductNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -37,7 +35,7 @@ public class CartController {
     public ResponseEntity<CartItemDto> addToCart(
             @Parameter(description = "The ID of the cart.")
             @PathVariable UUID cartId,
-            @RequestBody AddItemToCartRequest request) {
+            @Valid @RequestBody AddItemToCartRequest request) {
         var cartItemDto = cartService.addToCart(cartId, request.getProductId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(cartItemDto);
@@ -70,15 +68,5 @@ public class CartController {
         cartService.clearCart(cartId);
 
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(CartNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleCartNotFound() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Cart not found."));
-    }
-
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<Map<String, String>> productNotFound() {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Product not found in the cart."));
     }
 }

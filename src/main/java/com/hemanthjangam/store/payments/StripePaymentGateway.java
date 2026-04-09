@@ -10,12 +10,14 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class StripePaymentGateway implements PaymentGateway{
     @Value("${websiteUrl}")
@@ -42,7 +44,7 @@ public class StripePaymentGateway implements PaymentGateway{
             return new CheckoutSession(session.getUrl());
         }
         catch (StripeException exception) {
-            System.out.println(exception.getMessage());
+            log.error("Stripe checkout session creation failed", exception);
             throw new PaymentException();
         }
     }
@@ -55,10 +57,12 @@ public class StripePaymentGateway implements PaymentGateway{
             var event = Webhook.constructEvent(payload, signature, webhookSecretKey);
 
             return switch (event.getType()) {
-                case "payment_intent.succeeded" ->
-                        Optional.of(new PaymentResult(extractOrderId(event), PaymentStatus.PAID));
-                case "payment_intent.failed" ->
-                        Optional.of(new PaymentResult(extractOrderId(event), PaymentStatus.FAILED));
+                case "checkout.session.completed" ->
+                        Optional.of(new PaymentResult(extractOrderIdFromSession(event), PaymentStatus.PAID));
+                case "checkout.session.expired", "checkout.session.async_payment_failed" ->
+                        Optional.of(new PaymentResult(extractOrderIdFromSession(event), PaymentStatus.FAILED));
+                case "payment_intent.payment_failed" ->
+                        Optional.of(new PaymentResult(extractOrderIdFromPaymentIntent(event), PaymentStatus.FAILED));
                 default -> Optional.empty();
             };
         } catch (SignatureVerificationException e) {
@@ -66,7 +70,15 @@ public class StripePaymentGateway implements PaymentGateway{
         }
     }
 
-    private Long extractOrderId(Event event) {
+    private Long extractOrderIdFromSession(Event event) {
+        var stripeObject = event.getDataObjectDeserializer().getObject().orElseThrow(
+                () -> new PaymentException("Could not Deserialize Stripe event, Check the SDK and API version.")
+        );
+        var session = (Session) stripeObject;
+        return Long.valueOf(session.getMetadata().get("order_id"));
+    }
+
+    private Long extractOrderIdFromPaymentIntent(Event event) {
         var stripeObject = event.getDataObjectDeserializer().getObject().orElseThrow(
                 () -> new PaymentException("Could not Deserialize Stripe event, Check the SDK and API version.")
         );
