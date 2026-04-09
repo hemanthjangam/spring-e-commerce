@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllCategories, API_BASE_URL } from '../api';
+import { getAllCategories } from '../api';
+import { resolveImageUrl } from '../utils/media';
 
 export default function CategoryList() {
   const [categories, setCategories] = useState([]);
@@ -9,53 +10,71 @@ export default function CategoryList() {
 
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       try {
         const data = await getAllCategories();
-        if (mounted) setCategories(data || []);
+        if (mounted) {
+          setCategories(data || []);
+          setError(null);
+        }
       } catch (err) {
-        if (mounted) setError(err.message || 'Failed to load categories');
+        if (mounted) {
+          setError(err.message || 'Failed to load collections.');
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     })();
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  if (loading) return <p className="text-secondary page-container">Loading collections...</p>;
-  if (error) return <p className="text-error page-container">{error}</p>;
+  if (loading) {
+    return <p className="loading-state page-container">Loading collections...</p>;
+  }
+
+  if (error) {
+    return <p className="text-error page-container">{error}</p>;
+  }
 
   return (
-    <div className="page-container" style={{ paddingBottom: '50px' }}>
-      <h1 className="page-header">Shop by Collection</h1>
+    <div className="page-container" style={{ display: 'grid', gap: '24px' }}>
+      <section className="content-box">
+        <span className="eyebrow">Collections</span>
+        <h1 className="page-header" style={{ marginTop: '14px' }}>Browse by curated departments</h1>
+        <p className="section-copy" style={{ maxWidth: '60ch' }}>
+          Each collection maps directly to the backend category API, so this page stays useful
+          when you seed more catalog data or create categories from the admin panel.
+        </p>
+      </section>
 
-      <div className="category-grid">
-        {categories.map(cat => (
+      <section className="category-grid">
+        {categories.map((category) => (
           <Link
-            key={cat.id}
-            to={`/category/${cat.id}`}
-            state={{ categoryName: cat.name }}
-            style={{ textDecoration: 'none' }}
+            key={category.id}
+            to={`/category/${category.id}`}
+            state={{ categoryName: category.name }}
+            className="category-card"
           >
-            <div className="category-card">
-              <img
-                src={cat.imageUrl ? `${API_BASE_URL}${cat.imageUrl}` : 'https://placehold.co/400x380/F9FAFB/E5E7EB?text=Collection'}
-                alt={cat.name}
-                className="category-image"
-              />
-              <div className="category-info-box">
-                <strong className="category-name">{cat.name}</strong>
-              </div>
+            <img
+              src={resolveImageUrl(category.imageUrl, 'https://placehold.co/640x720/EEE2CF/52606D?text=Collection')}
+              alt={category.name}
+              className="category-image"
+            />
+            <div className="category-info-box">
+              <p className="category-name">{category.name}</p>
+              <p className="section-copy" style={{ marginTop: '8px', color: 'var(--ink-soft)' }}>
+                Open the collection and review every seeded product in that segment.
+              </p>
             </div>
           </Link>
         ))}
-      </div>
-
-      <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-        <Link to="/category/all" className="btn btn-primary" style={{ padding: '15px 30px', fontSize: '1rem' }}>
-          View All Products
-        </Link>
-      </div>
+      </section>
     </div>
   );
 }

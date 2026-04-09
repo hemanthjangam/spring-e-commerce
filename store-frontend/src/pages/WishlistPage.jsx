@@ -1,73 +1,120 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { HiOutlineTrash } from 'react-icons/hi';
+import { getWishlist, removeFromWishlist } from '../api';
 import { useAuth } from '../contexts/AuthContext';
-import { getWishlist, removeFromWishlist, API_BASE_URL } from "../api";
-import { Link } from "react-router-dom";
-import { HiOutlineTrash } from "react-icons/hi";
+import { resolveImageUrl } from '../utils/media';
 
 export default function WishlistPage() {
   const { token } = useAuth();
-  const [wishlist, setWishlist] = useState([]);
-  const [error, setError] = useState(null);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!token) {
-      setError("Please log in to view your wishlist.");
+      setError('Please log in to view your wishlist.');
       setLoading(false);
       return;
     }
-    const fetchWishlist = async () => {
+
+    let mounted = true;
+    (async () => {
       try {
         const data = await getWishlist(token);
-        setWishlist(data || []);
+        if (mounted) {
+          setItems(data || []);
+          setError(null);
+        }
       } catch (err) {
-        setError(err.message || 'Failed to load wishlist.');
+        if (mounted) {
+          setError(err.message || 'Failed to load wishlist.');
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
+    })();
+
+    return () => {
+      mounted = false;
     };
-    fetchWishlist();
   }, [token]);
 
   const handleRemove = async (productId) => {
     try {
-      await removeFromWishlist(productId, token);
-      setWishlist(prev => prev.filter(entry => entry.product.id !== productId));
+      try {
+        await removeFromWishlist(productId, token);
+      } catch (err) {
+        if (!err.message?.includes('Wishlist item not found')) {
+          throw err;
+        }
+      }
+      setItems((current) => current.filter((entry) => entry.product.id !== productId));
     } catch (err) {
-      setError(err.message || 'Failed to remove item.');
+      setError(err.message || 'Failed to remove wishlist item.');
     }
   };
 
-  if (loading) return <p className="text-secondary page-container">Loading your wishlist...</p>;
-  if (!token) return <p className="text-error page-container">Please <Link to="/login" style={{ color: 'var(--color-primary)' }}>log in</Link> to view your wishlist.</p>;
+  if (loading) {
+    return <p className="loading-state page-container">Loading wishlist...</p>;
+  }
+
+  if (!token) {
+    return (
+      <div className="page-container content-box empty-state">
+        <p className="text-error">{error}</p>
+        <Link to="/login" className="btn btn-primary" style={{ marginTop: '16px' }}>Login</Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="page-container content-box" style={{ maxWidth: '900px' }}>
-      <h2 className="page-header">My Wishlist ({wishlist.length})</h2>
-      {error && <p className="text-error">{error}</p>}
+    <div className="page-container" style={{ display: 'grid', gap: '24px' }}>
+      <section className="content-box">
+        <span className="eyebrow">Wishlist</span>
+        <h1 className="page-header" style={{ marginTop: '14px' }}>Saved for later</h1>
+        <p className="section-copy">Keep your shortlisted products here and move back to the catalog anytime.</p>
+      </section>
 
-      {wishlist.length === 0 ? (
-        <p className="text-secondary">Your wishlist is empty. <Link to="/category/all" style={{ color: 'var(--color-primary)' }}>Explore products!</Link></p>
-      ) : (
-        <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-          {wishlist.map(({ product }) => (
-            <li key={product.id} className="list-item">
-              <Link to={`/products/${product.id}`} style={{ display: 'flex', alignItems: 'center', flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
-                <img
-                  src={`${API_BASE_URL}${product.imageUrl}`}
-                  alt={product.name}
-                  className="cart-item-image"
-                />
-                <div style={{ flexGrow: 1 }}>
-                  <span className="text-primary" style={{ fontWeight: '600' }}>{product.name}</span>
-                  <span className="product-price" style={{ display: 'block', fontSize: '1.2rem' }}>₹{product.price}</span>
+      <section className="content-box">
+        {error && <p className="text-error">{error}</p>}
+
+        {items.length === 0 ? (
+          <div className="empty-state">
+            <p>No wishlist items yet.</p>
+            <Link to="/category/all" className="btn btn-primary" style={{ marginTop: '16px' }}>
+              Explore products
+            </Link>
+          </div>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {items.map(({ product }) => (
+              <li key={product.id} className="list-item">
+                <Link to={`/products/${product.id}`}>
+                  <img
+                    src={resolveImageUrl(product.imageUrl, 'https://placehold.co/220x260/F5E7D1/7C2D12?text=Product')}
+                    alt={product.name}
+                    className="cart-item-image"
+                  />
+                </Link>
+                <div>
+                  <p className="product-name">{product.name}</p>
+                  <p className="section-copy" style={{ marginTop: '8px' }}>Saved product from your account wishlist.</p>
                 </div>
-              </Link>
-              <button onClick={() => handleRemove(product.id)} className="btn btn-icon" title="Remove from Wishlist"><HiOutlineTrash /></button>
-            </li>
-          ))}
-        </ul>
-      )}
+                <div style={{ display: 'grid', gap: '12px', justifyItems: 'end' }}>
+                  <span className="product-price">₹{product.price}</span>
+                  <button type="button" className="btn btn-danger" onClick={() => handleRemove(product.id)}>
+                    <HiOutlineTrash />
+                    Remove
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
-};
+}

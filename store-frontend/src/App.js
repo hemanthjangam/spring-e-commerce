@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { getCartItemCount } from "./api";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
-import './App.css'; // Make sure this import is here
+import './App.css';
 
 import NavBar from "./components/NavBar";
 
+import Home from "./pages/Home";
 import CategoryList from "./pages/CategoryList";
 import ProductListByCategory from "./pages/ProductListByCategory";
 import ProductDetails from "./pages/ProductDetails";
@@ -35,6 +36,15 @@ function App() {
     if (userId) localStorage.setItem("userId", userId); else localStorage.removeItem("userId");
     if (userName) localStorage.setItem("userName", userName); else localStorage.removeItem("userName");
   }, [token, role, userId, userName]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      handleLogout();
+    };
+
+    window.addEventListener("auth:expired", handleAuthExpired);
+    return () => window.removeEventListener("auth:expired", handleAuthExpired);
+  }, []);
 
   const handleLoginSuccess = useCallback(async (newUserId, loginToken) => {
     const anonymousCartId = localStorage.getItem("cartId");
@@ -74,7 +84,8 @@ function App() {
           <NavBar />
           <main>
             <Routes>
-              <Route path="/" element={<CategoryList />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/collections" element={<CategoryList />} />
               <Route path="/search" element={<SearchPage />} /> {/* <-- 2. ADD NEW ROUTE */}
               <Route path="/category/:categoryId" element={<ProductListByCategory />} />
               <Route path="/products/:id" element={<ProductDetails />} />

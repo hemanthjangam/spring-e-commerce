@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ProductForm from '../components/ProductForm.jsx';
 import { useAuth } from '../contexts/AuthContext.js';
 import apiClient from '../api/apiClient.js';
+import { extractApiErrorMessage } from '../utils/apiError.js';
 
 export default function EditProduct() {
   const { role } = useAuth();
@@ -35,7 +36,7 @@ export default function EditProduct() {
       alert(`Success! Product updated.`);
       navigate(`/products/${id}`);
     } catch (err) {
-      alert('Failed to update product: ' + (err.response?.data?.message || err.message));
+      alert('Failed to update product: ' + extractApiErrorMessage(err, 'Request failed'));
     }
   }, [id, navigate]);
 
@@ -46,7 +47,17 @@ export default function EditProduct() {
 
   return (
     <div className="page-container">
-      <h2 className="page-header">Edit Product: {product.name}</h2>
+      <section className="hero-card" style={{ marginBottom: "1.5rem" }}>
+        <div>
+          <p className="eyebrow">Catalog management</p>
+          <h1 className="hero-title">Edit {product.name}</h1>
+          <p className="hero-copy">
+            Update pricing, description, category, or replace the product image
+            without leaving the admin flow.
+          </p>
+        </div>
+      </section>
+
       <div className="content-box">
         <ProductForm
           initialProduct={product}

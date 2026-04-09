@@ -1,116 +1,179 @@
-import React, { useEffect, useState } from 'react';
-import { getAllOrders, getOrderDetails } from '../api';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HiArrowLeft } from 'react-icons/hi';
+import { getAllOrders, getOrderDetails } from '../api';
+import { useAuth } from '../contexts/AuthContext';
 
 function OrderDetailsView({ orderId, token, onBack }) {
-    const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const data = await getOrderDetails(orderId, token);
-                setOrder(data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, [orderId, token]);
+  useEffect(() => {
+    let mounted = true;
 
-    if (loading) return <p className="text-secondary page-container">Loading order details...</p>;
-    if (error) return <p className="text-error page-container">{error}</p>;
-    if (!order) return <p className="text-secondary page-container">Order not found.</p>;
+    (async () => {
+      try {
+        const data = await getOrderDetails(orderId, token);
+        if (mounted) {
+          setOrder(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err.message || 'Failed to load order details.');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    })();
 
-    return (
-        <div className="page-container content-box" style={{ maxWidth: '800px' }}>
-            <button onClick={onBack} className="btn btn-secondary" style={{ marginBottom: '1.5rem' }}>
-                <HiArrowLeft /> Back to Orders
-            </button>
-            <h3 className="page-header">Order Details #{order.id}</h3>
-            <p className='text-secondary'>Placed On: {new Date(order.createdAt).toLocaleDateString()}</p>
-            <p><strong>Status:</strong> <span className={order.status === 'PAID' ? 'text-success' : 'text-accent'}>{order.status}</span></p>
+    return () => {
+      mounted = false;
+    };
+  }, [orderId, token]);
 
-            <h4 style={{ marginTop: '2rem' }}>Items</h4>
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-                {order.items.map((item, index) => (
-                    <li key={index} className="list-item">
-                        <div>
-                           <span style={{ fontWeight: 500 }}>{item.product.name}</span>
-                           <span className="text-secondary" style={{ display: 'block', fontSize: '0.9rem' }}>{item.quantity} x ₹{item.product.price}</span>
-                        </div>
-                        <div style={{ fontWeight: 600 }}>₹{item.totalPrice}</div>
-                    </li>
-                ))}
-            </ul>
-            <div style={{ borderTop: '1px solid var(--color-border)', marginTop: '1.5rem', paddingTop: '1.5rem', textAlign: 'right', fontSize: '1.5rem', fontWeight: '700' }}>
-                Total: ₹{order.totalPrice}
-            </div>
+  if (loading) {
+    return <p className="loading-state page-container">Loading order details...</p>;
+  }
+
+  if (error || !order) {
+    return <p className="text-error page-container">{error || 'Order not found.'}</p>;
+  }
+
+  return (
+    <div className="page-container" style={{ display: 'grid', gap: '24px' }}>
+      <section className="content-box">
+        <button type="button" className="btn btn-ghost" onClick={onBack}>
+          <HiArrowLeft />
+          Back to orders
+        </button>
+        <div style={{ marginTop: '18px' }}>
+          <span className="eyebrow">Order #{order.id}</span>
+          <h1 className="page-header" style={{ marginTop: '14px' }}>Status: {order.status}</h1>
+          <p className="section-copy">Placed on {new Date(order.createdAt).toLocaleString()}</p>
         </div>
-    );
+      </section>
+
+      <section className="content-box">
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {order.items.map((item, index) => (
+            <li key={`${item.product.id}-${index}`} className="list-item">
+              <div>
+                <p className="product-name">{item.product.name}</p>
+                <p className="section-copy" style={{ marginTop: '8px' }}>
+                  {item.quantity} x ₹{item.product.price}
+                </p>
+              </div>
+              <div />
+              <div className="product-price">₹{item.totalPrice}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <aside className="summary-card" style={{ maxWidth: '420px' }}>
+        <span className="eyebrow">Summary</span>
+        <h2 className="page-header" style={{ marginTop: '14px', fontSize: '1.4rem' }}>Order total</h2>
+        <p className="stat-card-value">₹{order.totalPrice}</p>
+      </aside>
+    </div>
+  );
 }
 
 export default function OrderPage() {
-    const { token } = useAuth();
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const { token } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        if (!token) {
-            setError("Login required to view your order history.");
-            setLoading(false);
-            return;
-        }
-        (async () => {
-            try {
-                const data = await getAllOrders(token);
-                setOrders(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, [token]);
-
-    if (selectedOrderId) {
-        return <OrderDetailsView orderId={selectedOrderId} token={token} onBack={() => setSelectedOrderId(null)} />;
+  useEffect(() => {
+    if (!token) {
+      setError('Login required to view order history.');
+      setLoading(false);
+      return;
     }
 
-    if (loading) return <p className="text-secondary page-container">Loading order history...</p>;
-    if (error) return <p className="text-error page-container">{error}</p>;
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getAllOrders(token);
+        if (mounted) {
+          setOrders(data || []);
+          setError(null);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err.message || 'Failed to load orders.');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    })();
 
-    return (
-        <div className="page-container content-box" style={{ maxWidth: '800px' }}>
-            <h2 className="page-header">Your Orders</h2>
-            {orders.length === 0 ? (
-                <p className="text-secondary">You haven't placed any orders yet. <Link to="/category/all" style={{color: 'var(--color-primary)'}}>Shop now.</Link></p>
-            ) : (
-                <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-                    {orders.map(order => (
-                        <li key={order.id} className="list-item">
-                            <div>
-                                <strong>Order #{order.id}</strong>
-                                <span className="text-secondary" style={{ display: 'block', fontSize: '0.9rem' }}>
-                                    {new Date(order.createdAt).toLocaleDateString()}
-                                </span>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <span style={{ fontWeight: 600, display: 'block' }}>₹{order.totalPrice}</span>
-                                <button onClick={() => setSelectedOrderId(order.id)} className="btn btn-secondary" style={{ marginTop: '5px' }}>
-                                    View Details
-                                </button>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
-    );
+    return () => {
+      mounted = false;
+    };
+  }, [token]);
+
+  const sortedOrders = useMemo(
+    () => [...orders].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt)),
+    [orders]
+  );
+
+  if (selectedOrderId) {
+    return <OrderDetailsView orderId={selectedOrderId} token={token} onBack={() => setSelectedOrderId(null)} />;
+  }
+
+  if (loading) {
+    return <p className="loading-state page-container">Loading orders...</p>;
+  }
+
+  if (error) {
+    return <p className="text-error page-container">{error}</p>;
+  }
+
+  return (
+    <div className="page-container" style={{ display: 'grid', gap: '24px' }}>
+      <section className="content-box">
+        <span className="eyebrow">Orders</span>
+        <h1 className="page-header" style={{ marginTop: '14px' }}>Order history</h1>
+        <p className="section-copy">This page is seeded with demo order history so you can review the full post-checkout flow.</p>
+      </section>
+
+      <section className="content-box">
+        {sortedOrders.length === 0 ? (
+          <div className="empty-state">
+            <p>You have not placed any orders yet.</p>
+            <Link to="/category/all" className="btn btn-primary" style={{ marginTop: '16px' }}>Start shopping</Link>
+          </div>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {sortedOrders.map((order) => (
+              <li key={order.id} className="list-item">
+                <div>
+                  <p className="product-name">Order #{order.id}</p>
+                  <p className="section-copy" style={{ marginTop: '8px' }}>
+                    {new Date(order.createdAt).toLocaleString()} · {order.status}
+                  </p>
+                </div>
+                <div className="metric-pill">{order.items?.length || 0} items</div>
+                <div style={{ display: 'grid', gap: '10px', justifyItems: 'end' }}>
+                  <span className="product-price">₹{order.totalPrice}</span>
+                  <button type="button" className="btn btn-secondary" onClick={() => setSelectedOrderId(order.id)}>
+                    View details
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
 }

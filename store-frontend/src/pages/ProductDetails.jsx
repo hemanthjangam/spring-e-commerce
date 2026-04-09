@@ -1,57 +1,57 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { HiHeart, HiOutlineHeart, HiOutlineShoppingBag } from 'react-icons/hi';
 import {
+  API_BASE_URL,
   addToCart as apiAddToCart,
-  createCart as apiCreateCart,
   addToWishlist as apiAddToWishlist,
+  createCart as apiCreateCart,
   getWishlist,
   removeFromWishlist as apiRemoveFromWishlist,
-  API_BASE_URL
 } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import useWebSocket from '../utils/useWebSocket';
-import { HiOutlineShoppingBag, HiOutlineHeart, HiHeart } from 'react-icons/hi';
+import { resolveImageUrl } from '../utils/media';
 
 export default function ProductDetails() {
   const { id } = useParams();
   const { token, role } = useAuth();
-  const { cartId, setCartId, refreshCount } = useCart();
+  const { cartId, setCartId, refreshCount, resetCart } = useCart();
 
-  // State Management
   const [product, setProduct] = useState(null);
-  const [isInWishlist, setIsInWishlist] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
-
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchProduct = async () => {
+    let mounted = true;
+
+    (async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/products/${id}`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch product. Status: ${response.status}`);
+          throw new Error('Failed to load product details.');
         }
+
         const data = await response.json();
-        if (isMounted) {
+        if (mounted) {
           setProduct(data);
+          setError(null);
         }
       } catch (err) {
-        if (isMounted) {
+        if (mounted) {
           setError(err.message || 'Failed to load product details.');
         }
       } finally {
-        if (isMounted) {
+        if (mounted) {
           setLoading(false);
         }
       }
-    };
+    })();
 
-    fetchProduct();
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, [id]);
 
@@ -60,161 +60,169 @@ export default function ProductDetails() {
       setIsInWishlist(false);
       return;
     }
-    const checkWishlist = async () => {
+
+    let mounted = true;
+    (async () => {
       try {
-        const currentWishlist = await getWishlist(token);
-        const isProductInWishlist = currentWishlist.some(item => item?.product?.id === product.id);
-        setIsInWishlist(isProductInWishlist);
-      } catch {
-        setIsInWishlist(false); // Assume not in wishlist if fetch fails
+        const items = await getWishlist(token);
+        if (mounted) {
+          setIsInWishlist(items.some((item) => item?.product?.id === product.id));
+        }
+      } catch (err) {
+        if (mounted) {
+          setIsInWishlist(false);
+        }
       }
+    })();
+
+    return () => {
+      mounted = false;
     };
-    checkWishlist();
   }, [product, token]);
 
-
-
-  const topic = product ? `inventory/${product.id}` : null;
-  const realTimeUpdate = useWebSocket(topic);
-
   useEffect(() => {
-    if (
-      realTimeUpdate &&
-      product &&
-      realTimeUpdate.productId === product.id &&
-      realTimeUpdate.newStock !== null &&
-      realTimeUpdate.newStock !== undefined
-    ) {
-      setProduct(prevProduct => ({ ...prevProduct, stock: realTimeUpdate.newStock }));
-      setMessage(`Live inventory updated: ${realTimeUpdate.newStock} units left.`);
+    if (!message && !error) {
+      return undefined;
     }
-  }, [realTimeUpdate, product]);
 
+    const timeout = setTimeout(() => {
+      setMessage(null);
+      setError(null);
+    }, 4000);
 
+    return () => clearTimeout(timeout);
+  }, [message, error]);
 
   const handleAddToCart = useCallback(async () => {
-    if (product.stock <= 0) {
-      setError('This item is out of stock.');
+    if (!product) {
       return;
     }
+
     try {
-      let currentCartId = cartId;
-      if (!currentCartId) {
-        const newCart = await apiCreateCart(token);
-        currentCartId = newCart.id;
-        setCartId(currentCartId);
+      let activeCartId = cartId;
+      if (!activeCartId) {
+        const newCart = await apiCreateCart(token || null);
+        activeCartId = newCart.id;
+        setCartId(activeCartId);
       }
-      await apiAddToCart(currentCartId, product.id, 1, token);
-      setMessage('Added to bag successfully!');
-      refreshCount();
+
+      try {
+        await apiAddToCart(activeCartId, product.id, 1, token || null);
+      } catch (err) {
+        if (!err.message?.includes('Cart not found')) {
+          throw err;
+        }
+
+        resetCart();
+        const replacementCart = await apiCreateCart(token || null);
+        activeCartId = replacementCart.id;
+        setCartId(activeCartId);
+        await apiAddToCart(activeCartId, product.id, 1, token || null);
+      }
+
+      await refreshCount(token || null, activeCartId);
+      setMessage('Added to cart successfully.');
     } catch (err) {
-      setError(err.message || 'Failed to add item to bag.');
+      setError(err.message || 'Failed to add product to cart.');
     }
-  }, [product, cartId, token, setCartId, refreshCount]);
+  }, [cartId, product, refreshCount, resetCart, setCartId, token]);
 
   const handleWishlistToggle = useCallback(async () => {
+    if (!product) {
+      return;
+    }
+
     if (!token) {
       setError('Please log in to manage your wishlist.');
       return;
     }
+
     try {
       if (isInWishlist) {
-        await apiRemoveFromWishlist(product.id, token);
-        setMessage('Removed from your wishlist.');
+        try {
+          await apiRemoveFromWishlist(product.id, token);
+        } catch (err) {
+          if (!err.message?.includes('Wishlist item not found')) {
+            throw err;
+          }
+        }
+        setMessage('Removed from wishlist.');
+        setIsInWishlist(false);
       } else {
-        await apiAddToWishlist(product.id, token);
-        setMessage('Added to your wishlist!');
+        try {
+          await apiAddToWishlist(product.id, token);
+        } catch (err) {
+          if (!err.message?.includes('already in wishlist')) {
+            throw err;
+          }
+        }
+        setMessage('Added to wishlist.');
+        setIsInWishlist(true);
       }
-      setIsInWishlist(!isInWishlist); // Toggle the state
     } catch (err) {
-      setError(err.message || 'An error occurred while updating your wishlist.');
+      setError(err.message || 'Failed to update wishlist.');
     }
-  }, [product, token, isInWishlist]);
-
-
-
-  useEffect(() => {
-    if (message || error) {
-      const timer = setTimeout(() => {
-        setMessage(null);
-        setError(null);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [message, error]);
+  }, [isInWishlist, product, token]);
 
   if (loading) {
-    return <p className="text-secondary page-container">Loading product details...</p>;
+    return <p className="loading-state page-container">Loading product details...</p>;
   }
 
   if (!product) {
     return <p className="text-error page-container">{error || 'Product not found.'}</p>;
   }
 
-  const isOutOfStock = product.stock <= 0;
-
   return (
-    <div className="page-container">
-      <div className="content-box" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-
-        <div style={{ flex: '1 1 45%' }}>
+    <div className="page-container" style={{ display: 'grid', gap: '24px' }}>
+      <section className="content-box panel-grid" style={{ alignItems: 'start' }}>
+        <div>
           <img
-            src={product.imageUrl ? `${API_BASE_URL}${product.imageUrl}` : 'https://placehold.co/500x500/F9FAFB/E5E7EB?text=Product'}
+            src={resolveImageUrl(product.imageUrl, 'https://placehold.co/900x1080/F5E7D1/7C2D12?text=Product')}
             alt={product.name}
-            style={{ width: '100%', borderRadius: 'var(--border-radius)' }}
+            className="product-image"
+            style={{ borderRadius: '24px' }}
           />
         </div>
 
-        <div style={{ flex: '1 1 55%' }}>
+        <div style={{ display: 'grid', gap: '18px' }}>
+          <div className="badge-row">
+            <span className="eyebrow">Product Detail</span>
+            <span className="badge">Category #{product.categoryId}</span>
+          </div>
 
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>{product.name}</h1>
-          <p className="text-secondary" style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>{product.description}</p>
+          <div>
+            <h1 className="page-header" style={{ marginBottom: '12px' }}>{product.name}</h1>
+            <p className="section-copy">{product.description}</p>
+          </div>
 
-          <p className="product-price" style={{ fontSize: '2.5rem', margin: '1.5rem 0' }}>
-            ₹{product.price}
-            <span className="product-discount">(20% OFF)</span>
-          </p>
+          <div className="summary-card">
+            <p className="text-secondary" style={{ margin: 0 }}>Current price</p>
+            <p className="stat-card-value" style={{ marginTop: '8px' }}>₹{product.price}</p>
+            <p className="section-copy" style={{ marginTop: '8px' }}>
+              Clean DTO-driven product view wired directly to the Spring Boot product endpoint.
+            </p>
+          </div>
 
-          <p className="text-secondary" style={{ marginBottom: '2rem' }}>
-            <strong>Availability:</strong>
-            <span className={isOutOfStock ? 'text-error' : 'text-success'}>
-              {isOutOfStock ? ' Out of Stock' : ` ${product.stock} units available`}
-            </span>
-          </p>
+          {message && <div className="metric-pill">{message}</div>}
+          {error && <p className="text-error">{error}</p>}
 
-          {error && <p className="text-error" style={{ marginBottom: '1rem' }}>{error}</p>}
-          {message && <p className="text-success" style={{ marginBottom: '1rem' }}>{message}</p>}
-
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button
-              onClick={handleAddToCart}
-              className={`btn btn-primary ${isOutOfStock ? 'btn-disabled' : ''}`}
-              disabled={isOutOfStock}
-              style={{ flex: 2, padding: '15px' }}
-            >
+          <div className="hero-actions">
+            <button type="button" className="btn btn-primary" onClick={handleAddToCart}>
               <HiOutlineShoppingBag />
-              {isOutOfStock ? 'Out of Stock' : 'Add to Bag'}
+              Add to Cart
             </button>
-
-            <button
-              onClick={handleWishlistToggle}
-              className="btn btn-secondary"
-              disabled={!token}
-              style={{ flex: 1, padding: '15px' }}
-            >
-              {isInWishlist ? <HiHeart style={{ color: 'var(--color-accent)' }} /> : <HiOutlineHeart />}
-              Wishlist
+            <button type="button" className="btn btn-secondary" onClick={handleWishlistToggle}>
+              {isInWishlist ? <HiHeart /> : <HiOutlineHeart />}
+              {isInWishlist ? 'Saved' : 'Wishlist'}
             </button>
           </div>
 
-          {role === 'ADMIN' && (
-            <Link to={`/products/${id}/edit`} className="btn btn-secondary" style={{ marginTop: '1rem', display: 'block' }}>
-              Edit Product (Admin)
-            </Link>
-          )}
-
+          <div className="badge-row">
+            <Link to="/category/all" className="btn btn-ghost">Continue shopping</Link>
+            {role === 'ADMIN' && <Link to={`/products/${id}/edit`} className="btn btn-secondary">Edit product</Link>}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

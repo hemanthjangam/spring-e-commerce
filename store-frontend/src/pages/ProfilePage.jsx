@@ -1,62 +1,84 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext.js';
-import { Link, useNavigate } from 'react-router-dom';
-import apiClient from '../api/apiClient.js';
+import { Link } from 'react-router-dom';
+import apiClient from '../api/apiClient';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProfilePage() {
-    const { token, userName, logout } = useAuth();
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+  const { token, userName, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        // ...
-        (async () => {
-            try {
-                const { data } = await apiClient.get('/profile');
-                setProfile(data);
-            } catch (err) {
-                setError("Session expired or access denied. Please log in again.");
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, [token, navigate]);
+  useEffect(() => {
+    if (!token) {
+      setError('Please log in to view your account.');
+      setLoading(false);
+      return;
+    }
 
-    if (loading) return <p className="text-secondary page-container">Loading profile details...</p>;
-    if (error) return <p className="text-error page-container">{error}</p>;
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await apiClient.get('/profile');
+        if (mounted) {
+          setProfile(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError('Failed to load your profile.');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    })();
 
-    const displayProfile = profile || { name: userName || 'User', email: 'N/A', id: 'N/A' };
+    return () => {
+      mounted = false;
+    };
+  }, [token]);
 
-    return (
-        <div className="page-container content-box" style={{ maxWidth: '800px' }}>
-            <h2 className="page-header">Hello, {displayProfile.name}</h2>
+  if (loading) {
+    return <p className="loading-state page-container">Loading account...</p>;
+  }
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr', gap: '2rem' }}>
-                <div className="account-menu">
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>My Account</h3>
-                    <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <li><Link to="/orders" className="btn btn-secondary" style={{ justifyContent: 'flex-start', width: '100%'}}>Order History</Link></li>
-                        <li><Link to="/wishlist" className="btn btn-secondary" style={{ justifyContent: 'flex-start', width: '100%'}}>Wishlist</Link></li>
-                        <li><button onClick={logout} className="btn btn-primary" style={{ marginTop: '1rem', width: '100%' }}>LOG OUT</button></li>
-                    </ul>
-                </div>
+  if (error) {
+    return <p className="text-error page-container">{error}</p>;
+  }
 
-                <div>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Personal Information</h3>
-                    <div style={{ background: 'var(--color-background-light)', padding: '1.5rem', borderRadius: 'var(--border-radius)' }}>
-                        <div style={{ paddingBottom: '0.75rem', borderBottom: '1px solid var(--color-border)' }}>
-                            <strong className="text-secondary">Full Name:</strong>
-                            <p className="text-primary" style={{margin: '0.25rem 0 0 0'}}>{displayProfile.name}</p>
-                        </div>
-                        <div style={{ paddingTop: '0.75rem' }}>
-                            <strong className="text-secondary">Email:</strong>
-                            <p className="text-primary" style={{margin: '0.25rem 0 0 0'}}>{displayProfile.email}</p>
-                        </div>
-                    </div>
-                </div>
+  const displayProfile = profile || { name: userName || 'User', email: 'N/A' };
+
+  return (
+    <div className="page-container" style={{ display: 'grid', gap: '24px' }}>
+      <section className="content-box">
+        <span className="eyebrow">Account</span>
+        <h1 className="page-header" style={{ marginTop: '14px' }}>Hello, {displayProfile.name}</h1>
+        <p className="section-copy">Manage your profile, wishlist, and order history from one place.</p>
+      </section>
+
+      <section className="panel-grid">
+        <aside className="dashboard-card account-menu">
+          <Link to="/orders" className="btn btn-secondary">Order history</Link>
+          <Link to="/wishlist" className="btn btn-secondary">Wishlist</Link>
+          <button type="button" className="btn btn-primary" onClick={logout}>Log out</button>
+        </aside>
+
+        <article className="dashboard-card">
+          <h2 className="page-header" style={{ fontSize: '1.35rem' }}>Personal information</h2>
+          <div className="feature-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            <div className="summary-card">
+              <p className="text-secondary">Full name</p>
+              <p className="stat-card-value" style={{ fontSize: '1.35rem' }}>{displayProfile.name}</p>
             </div>
-        </div>
-    );
+            <div className="summary-card">
+              <p className="text-secondary">Email</p>
+              <p className="stat-card-value" style={{ fontSize: '1.1rem' }}>{displayProfile.email}</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+  );
 }

@@ -1,21 +1,34 @@
-import React, { useState, useEffect } from "react";
-import { getAllCategories, API_BASE_URL } from '../api';
+import React, { useEffect, useState } from "react";
+import { API_BASE_URL, getAllCategories } from "../api";
+
+const buildImageUrl = (imageUrl) => {
+  if (!imageUrl) {
+    return null;
+  }
+
+  return imageUrl.startsWith("http") ? imageUrl : `${API_BASE_URL}${imageUrl}`;
+};
 
 const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
-  const [product, setProduct] = useState(initialProduct || {});
+  const [product, setProduct] = useState(
+    initialProduct || {
+      name: "",
+      price: "",
+      description: "",
+      categoryId: "",
+      imageUrl: "",
+    }
+  );
   const [file, setFile] = useState(null);
-
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [errorCategories, setErrorCategories] = useState(null);
-
   const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoadingCategories(true);
-        // Use the API function to get categories
         const cats = await getAllCategories();
         setCategories(cats || []);
         setErrorCategories(null);
@@ -30,21 +43,15 @@ const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
   }, []);
 
   useEffect(() => {
-    if (isEdit && initialProduct?.imageUrl) {
-      setPreviewUrl(`${API_BASE_URL}${initialProduct.imageUrl}`); //
-    }
-
     if (file) {
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
-
       return () => URL.revokeObjectURL(objectUrl);
-    } else if (isEdit && initialProduct?.imageUrl) {
-      setPreviewUrl(`${API_BASE_URL}${initialProduct.imageUrl}`);
-    } else {
-      setPreviewUrl(null);
     }
-  }, [file, isEdit, initialProduct]); // Re-run this logic if the file or product changes
+
+    setPreviewUrl(buildImageUrl(initialProduct?.imageUrl));
+    return undefined;
+  }, [file, initialProduct]);
 
   useEffect(() => {
     if (initialProduct) {
@@ -53,7 +60,9 @@ const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
     setFile(null);
   }, [initialProduct]);
 
-  const handleChange = (e) => setProduct({ ...product, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setProduct({ ...product, [e.target.name]: e.target.value });
+
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
   const submitWrapper = (e) => {
@@ -63,7 +72,6 @@ const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
       ...product,
       price: parseFloat(product.price) || 0,
       categoryId: parseInt(product.categoryId) || 0,
-      stock: parseInt(product.stock) || 0,
     };
 
     const formData = new FormData();
@@ -80,7 +88,18 @@ const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
   };
 
   return (
-    <form onSubmit={submitWrapper}>
+    <form onSubmit={submitWrapper} className="stack-lg">
+      <div>
+        <p className="eyebrow">Admin workspace</p>
+        <h2 className="section-title" style={{ marginBottom: "0.5rem" }}>
+          {isEdit ? "Update product details" : "Create a new product"}
+        </h2>
+        <p className="text-secondary">
+          Keep the product information short, accurate, and easy to scan in the
+          storefront.
+        </p>
+      </div>
+
       <div className="form-group">
         <label htmlFor="name" className="form-label">Product Name</label>
         <input id="name" name="name" value={product.name || ''} onChange={handleChange} required className="form-input" />
@@ -113,13 +132,15 @@ const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
       </div>
 
       <div className="form-group">
-        <label htmlFor="stock" className="form-label">Stock Quantity</label>
-        <input id="stock" name="stock" type="number" value={product.stock || 0} onChange={handleChange} required className="form-input" min="0" />
-      </div>
-
-      <div className="form-group">
         <label htmlFor="description" className="form-label">Description</label>
-        <textarea id="description" name="description" value={product.description || ''} onChange={handleChange} className="form-textarea" />
+        <textarea
+          id="description"
+          name="description"
+          value={product.description || ''}
+          onChange={handleChange}
+          className="form-textarea"
+          rows="5"
+        />
       </div>
 
       {previewUrl && (
@@ -132,8 +153,8 @@ const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
               width: '150px',
               height: '150px',
               objectFit: 'cover',
-              borderRadius: 'var(--border-radius)',
-              border: '1px solid var(--color-border)'
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--line)'
             }}
           />
         </div>
@@ -142,7 +163,11 @@ const ProductForm = ({ initialProduct, handleSubmit, isEdit }) => {
       <div className="form-group">
         <label htmlFor="imageFile" className="form-label">{isEdit ? 'Replace Image' : 'Upload Image'}</label>
         <input id="imageFile" name="imageFile" type="file" accept="image/*" onChange={handleFileChange} className="form-input" required={!isEdit} />
-        {isEdit && !file && product.imageUrl && <p className="text-secondary" style={{fontSize: '0.8rem', marginTop: '5px'}}>Current image: {product.imageUrl}</p>}
+        {isEdit && !file && product.imageUrl && (
+          <p className="text-secondary" style={{ fontSize: "0.88rem", marginTop: "0.45rem" }}>
+            Leave empty to keep the current product image.
+          </p>
+        )}
       </div>
 
       <button type="submit" className="btn btn-primary submit-button">

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { createCategory } from '../api/apiClient';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function CreateCategory() {
   const { role } = useAuth();
@@ -11,7 +12,7 @@ export default function CreateCategory() {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState(null);
-  const [submitting, setSubmitting] = useState(false); // Corrected typo: removed extra parens
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (role !== 'ADMIN') navigate('/');
@@ -55,10 +56,9 @@ export default function CreateCategory() {
     try {
       await createCategory(formData);
       alert('Success! Category created.');
-      navigate('/');
+      navigate('/collections');
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || 'Failed to create category.');
+      setError(extractApiErrorMessage(err, 'Failed to create category.'));
     } finally {
       setSubmitting(false);
     }
@@ -68,9 +68,28 @@ export default function CreateCategory() {
 
   return (
     <div className="page-container">
-      <h2 className="page-header">Add New Category (Admin Panel)</h2>
+      <section className="hero-card" style={{ marginBottom: "1.5rem" }}>
+        <div>
+          <p className="eyebrow">Catalog management</p>
+          <h1 className="hero-title">Create a new collection</h1>
+          <p className="hero-copy">
+            Collections organise the storefront and power the category pages.
+            Add a name and a strong visual so products feel grouped and clear.
+          </p>
+        </div>
+      </section>
+
       <div className="content-box">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="stack-lg">
+          <div>
+            <h2 className="section-title" style={{ marginBottom: "0.5rem" }}>
+              Collection details
+            </h2>
+            <p className="text-secondary">
+              Use a simple category name customers can understand at a glance.
+            </p>
+          </div>
+
           {error && <p className="text-error" style={{ marginBottom: '15px' }}>{error}</p>}
 
           <div className="form-group">
@@ -95,8 +114,8 @@ export default function CreateCategory() {
                   width: '150px',
                   height: '150px',
                   objectFit: 'cover',
-                  borderRadius: 'var(--border-radius)',
-                  border: '1px solid var(--color-border)'
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--line)'
                 }}
               />
             </div>

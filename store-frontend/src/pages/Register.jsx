@@ -1,67 +1,86 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../api/apiClient';
+import { useAuth } from '../contexts/AuthContext';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function Register() {
-  const { setToken, setRole, setUserId, setUserName, onLoginSuccess } = useAuth();
+  const navigate = useNavigate();
+  const { setRole, setToken, setUserId, setUserName, onLoginSuccess } = useAuth();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const submit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
     setError(null);
+
     try {
       await apiClient.post('/users', { name, email, password });
-
-      const loginRes = await apiClient.post('/auth/login', { email, password });
-      const token = loginRes.data?.token;
-      if (!token) throw new Error('Login failed after registration');
+      const loginResponse = await apiClient.post('/auth/login', { email, password });
+      const token = loginResponse.data?.token;
+      if (!token) {
+        throw new Error('Registration succeeded but login failed.');
+      }
 
       const payload = JSON.parse(atob(token.split('.')[1]));
-      const newUserId = payload.sub;
-
       setToken(token);
       setRole(payload.role);
-      setUserId(newUserId);
+      setUserId(payload.sub);
       setUserName(payload.name);
 
-      if (onLoginSuccess) await onLoginSuccess(newUserId, token);
+      if (onLoginSuccess) {
+        await onLoginSuccess(payload.sub, token);
+      }
+
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(extractApiErrorMessage(err, 'Registration failed.'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="page-container">
-      <form onSubmit={submit} className="form-container content-box">
-        <h2 className="page-header" style={{ textAlign: 'center', border: 'none' }}>Create Account</h2>
-        {error && <p className="text-error" style={{ marginBottom: '1rem', textAlign: 'center' }}>{error}</p>}
-
-        <div className="form-group">
-          <label htmlFor="name" className="form-label">Full Name</label>
-          <input id="name" value={name} onChange={e => setName(e.target.value)} required className="form-input" />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="email" className="form-label">Email Address</label>
-          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="form-input" />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password" className="form-label">Password</label>
-          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required className="form-input" />
-        </div>
-
-        <button type="submit" className="btn btn-primary submit-button">Create Account</button>
-        <p className="text-secondary" style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          Already have an account? <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: '500' }}>Log In</Link>
+      <div className="content-box form-container">
+        <span className="eyebrow">Register</span>
+        <h1 className="page-header" style={{ marginTop: '14px' }}>Create a customer account</h1>
+        <p className="section-copy" style={{ marginBottom: '20px' }}>
+          Register against the live Spring Boot backend and continue directly into the storefront.
         </p>
-      </form>
+
+        <form onSubmit={submit} className="form-grid">
+          <div className="form-group">
+            <label htmlFor="name" className="form-label">Full name</label>
+            <input id="name" className="form-input" value={name} onChange={(event) => setName(event.target.value)} required />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input id="email" type="email" className="form-input" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input id="password" type="password" className="form-input" value={password} onChange={(event) => setPassword(event.target.value)} required />
+          </div>
+
+          {error && <p className="text-error">{error}</p>}
+
+          <button type="submit" className="btn btn-primary" disabled={submitting}>
+            {submitting ? 'Creating account...' : 'Create account'}
+          </button>
+        </form>
+
+        <p className="section-copy" style={{ marginTop: '18px' }}>
+          Already registered? <Link to="/login">Login here</Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,15 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, useLocation, Link } from 'react-router-dom';
-import { getProductsByCategory, API_BASE_URL } from '../api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { getProductsByCategory } from '../api';
 import { useAuth } from '../contexts/AuthContext';
+import { resolveImageUrl } from '../utils/media';
 
 export default function ProductListByCategory() {
   const { categoryId } = useParams();
   const location = useLocation();
-  const { token, role } = useAuth();
+  const { role } = useAuth();
 
-  const categoryName = location.state?.categoryName || (categoryId === 'all' ? 'All Products' : 'Category Products');
+  const title = location.state?.categoryName || (categoryId === 'all' ? 'All Products' : 'Collection');
   const filterId = useMemo(() => (categoryId === 'all' ? null : categoryId), [categoryId]);
 
   const [products, setProducts] = useState([]);
@@ -17,60 +18,82 @@ export default function ProductListByCategory() {
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true); setError(null);
+
     (async () => {
       try {
         const data = await getProductsByCategory(filterId);
-        if (mounted) setProducts(data || []);
+        if (mounted) {
+          setProducts(data || []);
+          setError(null);
+        }
       } catch (err) {
-        if (mounted) setError(err.message || 'Failed to load products.');
+        if (mounted) {
+          setError(err.message || 'Failed to load products.');
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     })();
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, [filterId]);
 
-  if (loading) return <p className="text-secondary page-container">Loading products...</p>;
-  if (error) return <p className="text-error page-container">{error}</p>;
+  if (loading) {
+    return <p className="loading-state page-container">Loading products...</p>;
+  }
+
+  if (error) {
+    return <p className="text-error page-container">{error}</p>;
+  }
 
   return (
-    <div className="page-container">
-      <Link to="/" className="text-secondary" style={{ textDecoration: 'none', marginBottom: '15px', display: 'inline-block', fontWeight: 500 }}>
-        &larr; Back to Collections
-      </Link>
-      <h1 className="page-header">{categoryName}</h1>
+    <div className="page-container" style={{ display: 'grid', gap: '24px' }}>
+      <section className="content-box">
+        <Link to="/collections" className="btn btn-ghost" style={{ marginBottom: '18px' }}>
+          Back to collections
+        </Link>
+        <span className="eyebrow">Catalog</span>
+        <h1 className="page-header" style={{ marginTop: '14px' }}>{title}</h1>
+        <p className="section-copy">
+          {products.length} product{products.length === 1 ? '' : 's'} available in this view.
+        </p>
+      </section>
 
       {products.length === 0 ? (
-        <p className="text-secondary">No products found in this category.</p>
+        <section className="content-box empty-state">No products found in this collection.</section>
       ) : (
-        <div className="product-grid">
-          {products.map(p => (
-            <div key={p.id} className="product-card">
-              <Link to={`/products/${p.id}`}>
+        <section className="product-grid">
+          {products.map((product) => (
+            <article key={product.id} className="product-card">
+              <Link to={`/products/${product.id}`}>
                 <img
-                  src={p.imageUrl ? `${API_BASE_URL}${p.imageUrl}` : 'https://placehold.co/400x300/F9FAFB/E5E7EB?text=Product'}
-                  alt={p.name}
+                  src={resolveImageUrl(product.imageUrl, 'https://placehold.co/640x760/F5E7D1/7C2D12?text=Product')}
+                  alt={product.name}
                   className="product-image"
                 />
                 <div className="product-info-box">
-                  <p className="product-name">{p.name}</p>
-                  <p className="product-price">
-                    ₹{p.price}
-                    <span className="product-discount">(25% OFF)</span>
-                  </p>
+                  <p className="product-name">{product.name}</p>
+                  <p className="section-copy" style={{ marginTop: '10px' }}>{product.description}</p>
+                  <div className="product-meta">
+                    <span className="badge">Category #{product.categoryId}</span>
+                    <span className="product-price">₹{product.price}</span>
+                  </div>
                 </div>
               </Link>
-              {role === 'ADMIN' && token &&
-                <div style={{ padding: '0 16px 16px' }}>
-                  <Link to={`/products/${p.id}/edit`} className="btn btn-secondary" style={{ width: '100%' }}>
-                    Edit
+              {role === 'ADMIN' && (
+                <div style={{ padding: '0 18px 18px' }}>
+                  <Link to={`/products/${product.id}/edit`} className="btn btn-secondary" style={{ width: '100%' }}>
+                    Edit Product
                   </Link>
                 </div>
-              }
-            </div>
+              )}
+            </article>
           ))}
-        </div>
+        </section>
       )}
     </div>
   );

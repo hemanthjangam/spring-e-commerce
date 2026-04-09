@@ -7,6 +7,7 @@ const CartContext = createContext({
   cartItemCount: 0,
   setCartId: () => {},
   refreshCount: () => {},
+  resetCart: () => {},
 });
 
 export const CartProvider = ({ children }) => {
@@ -17,6 +18,12 @@ export const CartProvider = ({ children }) => {
 
   const [cartId, setCartId] = useState(initialCartId);
   const [cartItemCount, setCartItemCount] = useState(0);
+
+  const resetCart = useCallback(() => {
+    localStorage.removeItem(localKey);
+    setCartId(null);
+    setCartItemCount(0);
+  }, [localKey]);
 
   const refreshCount = useCallback(async (tokenOverride, cartIdOverride) => {
     const currentToken = tokenOverride !== undefined ? tokenOverride : token;
@@ -31,9 +38,13 @@ export const CartProvider = ({ children }) => {
       setCartItemCount(count);
     } catch (error) {
       console.error("Failed to fetch cart item count:", error);
-      setCartItemCount(0);
+      if (error?.message?.includes('Cart not found')) {
+        resetCart();
+      } else {
+        setCartItemCount(0);
+      }
     }
-  }, [cartId, token]);
+  }, [cartId, token, resetCart]);
 
   useEffect(() => {
     if (cartId) {
@@ -60,6 +71,7 @@ export const CartProvider = ({ children }) => {
     cartItemCount,
     setCartId,
     refreshCount,
+    resetCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

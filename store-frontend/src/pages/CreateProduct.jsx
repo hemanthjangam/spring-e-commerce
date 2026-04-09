@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ProductForm from '../components/ProductForm';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/apiClient';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function CreateProduct() {
   const { role } = useAuth();
@@ -18,7 +19,7 @@ export default function CreateProduct() {
       alert(`Success! Product created.`);
       navigate('/category/all');
     } catch (err) {
-      alert('Failed to create product: ' + (err.response?.data?.message || err.message));
+      alert('Failed to create product: ' + extractApiErrorMessage(err, 'Request failed'));
     }
   }, [navigate]);
 
@@ -26,7 +27,17 @@ export default function CreateProduct() {
 
   return (
     <div className="page-container">
-      <h2 className="page-header">Add New Product (Admin Panel)</h2>
+      <section className="hero-card" style={{ marginBottom: "1.5rem" }}>
+        <div>
+          <p className="eyebrow">Catalog management</p>
+          <h1 className="hero-title">Add a product to the storefront</h1>
+          <p className="hero-copy">
+            Create well-structured products with category, pricing, description,
+            and a storefront image in one place.
+          </p>
+        </div>
+      </section>
+
       <div className="content-box">
         <ProductForm handleSubmit={handleSubmit} isEdit={false} />
       </div>
