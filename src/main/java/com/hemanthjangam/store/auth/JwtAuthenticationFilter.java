@@ -19,6 +19,8 @@ import java.util.List;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final DeviceFingerprintService deviceFingerprintService;
+    private final RevokedTokenService revokedTokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -30,7 +32,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         var token = authHeader.replace("Bearer ", "");
         var jwt = jwtService.parseToken(token);
-        if (jwt == null || jwt.isExpired()) {
+        if (jwt == null
+                || jwt.isExpired()
+                || !"access".equals(jwt.getType())
+                || revokedTokenService.isRevoked(jwt.getTokenId())
+                || !deviceFingerprintService.matches(request, jwt.getFingerprint())) {
             filterChain.doFilter(request, response);
             return;
         }

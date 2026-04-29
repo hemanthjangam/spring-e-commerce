@@ -6,11 +6,13 @@ import com.hemanthjangam.store.orders.OrderNotFoundException;
 import com.hemanthjangam.store.payments.PaymentException;
 import com.hemanthjangam.store.products.CategoryNotFoundException;
 import com.hemanthjangam.store.products.ProductNotFoundException;
+import com.hemanthjangam.store.auth.TooManyRequestsException;
 import com.hemanthjangam.store.users.EmailAlreadyRegisteredException;
 import com.hemanthjangam.store.users.UserNotFoundException;
 import com.hemanthjangam.store.wishlist.AlreadyInWishlistException;
 import com.hemanthjangam.store.wishlist.ItemNotFoundInWishlistException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -71,6 +73,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class, IllegalStateException.class})
     public ResponseEntity<ErrorDto> handleUnauthorized(RuntimeException exception) {
         return ResponseEntity.status(401).body(new ErrorDto(exception.getMessage()));
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorDto> handleTooManyRequests(TooManyRequestsException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(new ErrorDto(exception.getMessage()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

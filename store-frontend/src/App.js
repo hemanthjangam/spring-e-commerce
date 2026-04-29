@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { getCartItemCount } from "./api";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
+import apiClient from "./api/apiClient";
 import './App.css';
 
 import NavBar from "./components/NavBar";
@@ -46,6 +47,10 @@ function App() {
     return () => window.removeEventListener("auth:expired", handleAuthExpired);
   }, []);
 
+  useEffect(() => {
+    apiClient.get('/auth/csrf').catch(() => {});
+  }, []);
+
   const handleLoginSuccess = useCallback(async (newUserId, loginToken) => {
     const anonymousCartId = localStorage.getItem("cartId");
     if (anonymousCartId) {
@@ -59,7 +64,13 @@ function App() {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(async () => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.error("[Auth] Logout request failed.", error);
+    }
+
     setToken(null);
     setRole(null);
     setUserId(null);
@@ -68,7 +79,7 @@ function App() {
     localStorage.removeItem("role");
     localStorage.removeItem("userId");
     localStorage.removeItem("userName");
-  };
+  }, []);
 
   const authContextValue = {
     token, role, userId, userName,

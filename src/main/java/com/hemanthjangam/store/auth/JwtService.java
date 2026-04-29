@@ -8,26 +8,30 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Service
 public class JwtService {
     private final JwtConfig jwtConfig;
 
-    public Jwt generateAccessToken(User user) {
-        return generateToken(user, jwtConfig.getAccessTokenExpiration());
+    public Jwt generateAccessToken(User user, String fingerprint) {
+        return generateToken(user, jwtConfig.getAccessTokenExpiration(), "access", fingerprint);
     }
 
-    public Jwt generateRefreshToken(User user) {
-        return generateToken(user, jwtConfig.getRefreshTokenExpiration());
+    public Jwt generateRefreshToken(User user, String fingerprint) {
+        return generateToken(user, jwtConfig.getRefreshTokenExpiration(), "refresh", fingerprint);
     }
 
-    private Jwt generateToken(User user, long tokenExpiration) {
+    private Jwt generateToken(User user, long tokenExpiration, String type, String fingerprint) {
         var claims = Jwts.claims()
                 .subject(user.getId().toString())
+                .id(UUID.randomUUID().toString())
                 .add("email", user.getEmail())
                 .add("name", user.getName())
                 .add("role", user.getRole())
+                .add("type", type)
+                .add("fp", fingerprint)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
                 .build();
